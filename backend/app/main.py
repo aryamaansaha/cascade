@@ -3,11 +3,12 @@ Cascade - DAG-based task management engine with automatic date propagation.
 """
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from app.database import init_db
 from app.routes import tasks, dependencies, projects
-from app.exceptions import register_exception_handlers, CascadeException
+from app.exceptions import register_exception_handlers
 from app.logging_config import setup_logging, get_logger
 
 # Initialize logging
@@ -30,6 +31,15 @@ app = FastAPI(
     description="DAG-based task management engine with automatic date propagation",
     version="0.1.0",
     lifespan=lifespan,
+)
+
+# CORS middleware - allow frontend to access API
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://localhost:3000"],  # Frontend URLs
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Register custom exception handlers
