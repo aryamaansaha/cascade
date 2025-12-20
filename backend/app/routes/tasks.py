@@ -1,6 +1,10 @@
+"""
+Task routes for the Cascade API.
+"""
+
 import uuid
 from datetime import date, datetime
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
@@ -8,6 +12,10 @@ from app.database import get_session
 from app.models import Task, Project, Dependency
 from app.schemas import TaskCreate, TaskUpdate, TaskRead
 from app.worker import enqueue_recalc
+from app.exceptions import NotFoundError
+from app.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 router = APIRouter()
 
@@ -25,10 +33,7 @@ async def create_task(
     # Verify project exists
     project = await session.get(Project, task_in.project_id)
     if not project:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Project {task_in.project_id} not found",
-        )
+        raise NotFoundError("Project", str(task_in.project_id))
     
     task_data = task_in.model_dump()
     if task_data["start_date"] is None:
@@ -39,7 +44,7 @@ async def create_task(
     await session.flush()
     await session.refresh(task)
     
-    # TODO: In Phase 3, trigger low-priority recalc job here
+    logger.info(f"Created task: id={task.id} title='{task.title}' project={task.project_id}")
     
     return task
 
@@ -59,7 +64,11 @@ async def list_tasks(
         query = query.where(Task.project_id == project_id)
     
     result = await session.execute(query)
-    return list(result.scalars().all())
+    tasks = list(result.scalars().all())
+    
+    logger.debug(f"Listed {len(tasks)} tasks" + (f" for project={project_id}" if project_id else ""))
+    
+    return tasks
 
 
 @router.get("/{task_id}", response_model=TaskRead)
@@ -70,10 +79,7 @@ async def get_task(
     """Get a task by ID."""
     task = await session.get(Task, task_id)
     if not task:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Task {task_id} not found",
-        )
+        raise NotFoundError("Task", str(task_id))
     return task
 
 
@@ -91,12 +97,12 @@ async def update_task(
     """
     task = await session.get(Task, task_id)
     if not task:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Task {task_id} not found",
-        )
+        raise NotFoundError("Task", str(task_id))
     
     update_data = task_in.model_dump(exclude_unset=True)
+    
+    # Log what's being updated
+    logger.info(f"Updating task {task_id}: {update_data}")
     
     # Update fields
     for field, value in update_data.items():
@@ -129,10 +135,9 @@ async def delete_task(
     """
     task = await session.get(Task, task_id)
     if not task:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Task {task_id} not found",
-        )
+        raise NotFoundError("Task", str(task_id))
+    
+    logger.info(f"Deleting task {task_id}: '{task.title}'")
     
     # Find all direct successors before deletion - they need recalculation
     successors_query = select(Dependency.successor_id).where(
@@ -140,6 +145,8 @@ async def delete_task(
     )
     successors_result = await session.execute(successors_query)
     successor_ids = [row[0] for row in successors_result.all()]
+    
+    logger.debug(f"Task {task_id} has {len(successor_ids)} successors that need recalc")
     
     # Delete the task (cascades to dependencies via FK)
     await session.delete(task)
@@ -154,4 +161,3 @@ async def delete_task(
             successor.calc_version_id = new_version_id
             await session.flush()
             await enqueue_recalc(str(successor_id), str(new_version_id))
-

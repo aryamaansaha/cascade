@@ -1,5 +1,9 @@
+"""
+Dependency routes for the Cascade API.
+"""
+
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
@@ -8,6 +12,16 @@ from app.models import Task, Dependency
 from app.schemas import DependencyCreate, DependencyRead
 from app.services.graph import detect_cycle
 from app.worker import enqueue_recalc
+from app.exceptions import (
+    NotFoundError,
+    CycleDetectedError,
+    DuplicateDependencyError,
+    SelfDependencyError,
+    CrossProjectDependencyError,
+)
+from app.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 router = APIRouter()
 
@@ -23,27 +37,27 @@ async def create_dependency(
     Performs cycle detection before creating the dependency.
     If adding this edge would create a cycle, returns 400 Bad Request.
     """
+    logger.info(f"Creating dependency: {dep_in.predecessor_id} -> {dep_in.successor_id}")
+    
     # Validate both tasks exist and are in the same project
     predecessor = await session.get(Task, dep_in.predecessor_id)
     successor = await session.get(Task, dep_in.successor_id)
     
     if not predecessor:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Predecessor task {dep_in.predecessor_id} not found",
-        )
+        raise NotFoundError("Predecessor task", str(dep_in.predecessor_id))
     
     if not successor:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Successor task {dep_in.successor_id} not found",
-        )
+        raise NotFoundError("Successor task", str(dep_in.successor_id))
     
     # Ensure tasks are in the same project
     if predecessor.project_id != successor.project_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot create dependency between tasks in different projects",
+        logger.warning(
+            f"Cross-project dependency rejected: "
+            f"{predecessor.project_id} -> {successor.project_id}"
+        )
+        raise CrossProjectDependencyError(
+            str(predecessor.project_id),
+            str(successor.project_id),
         )
     
     # Check if dependency already exists
@@ -52,19 +66,19 @@ async def create_dependency(
         (dep_in.predecessor_id, dep_in.successor_id)
     )
     if existing:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Dependency already exists",
+        logger.warning(f"Duplicate dependency rejected: {dep_in.predecessor_id} -> {dep_in.successor_id}")
+        raise DuplicateDependencyError(
+            str(dep_in.predecessor_id),
+            str(dep_in.successor_id),
         )
     
     # Prevent self-loops
     if dep_in.predecessor_id == dep_in.successor_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="A task cannot depend on itself",
-        )
+        logger.warning(f"Self-dependency rejected: {dep_in.predecessor_id}")
+        raise SelfDependencyError(str(dep_in.predecessor_id))
     
     # Cycle detection
+    logger.debug(f"Running cycle detection for {dep_in.predecessor_id} -> {dep_in.successor_id}")
     has_cycle = await detect_cycle(
         session,
         predecessor.project_id,
@@ -73,9 +87,13 @@ async def create_dependency(
     )
     
     if has_cycle:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Adding this dependency would create a cycle",
+        logger.warning(
+            f"Cycle detected: {dep_in.predecessor_id} -> {dep_in.successor_id} "
+            f"would create a cycle"
+        )
+        raise CycleDetectedError(
+            str(dep_in.predecessor_id),
+            str(dep_in.successor_id),
         )
     
     # Create the dependency
@@ -86,6 +104,11 @@ async def create_dependency(
     session.add(dependency)
     await session.flush()
     await session.refresh(dependency)
+    
+    logger.info(
+        f"Created dependency: {predecessor.title} -> {successor.title} "
+        f"(project={predecessor.project_id})"
+    )
     
     # Update successor's version and trigger recalc
     # The new dependency may push the successor's start date later
@@ -129,7 +152,11 @@ async def list_dependencies(
         query = select(Dependency)
     
     result = await session.execute(query)
-    return list(result.scalars().all())
+    dependencies = list(result.scalars().all())
+    
+    logger.debug(f"Listed {len(dependencies)} dependencies")
+    
+    return dependencies
 
 
 @router.delete(
@@ -149,10 +176,9 @@ async def delete_dependency(
     """
     dependency = await session.get(Dependency, (predecessor_id, successor_id))
     if not dependency:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Dependency not found",
-        )
+        raise NotFoundError("Dependency", f"{predecessor_id}/{successor_id}")
+    
+    logger.info(f"Deleting dependency: {predecessor_id} -> {successor_id}")
     
     # Get the successor task before deleting dependency
     successor = await session.get(Task, successor_id)
@@ -166,4 +192,3 @@ async def delete_dependency(
         successor.calc_version_id = new_version_id
         await session.flush()
         await enqueue_recalc(str(successor_id), str(new_version_id))
-
