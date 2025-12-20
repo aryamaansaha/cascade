@@ -1,0 +1,116 @@
+/* =============================================================================
+   Flow Canvas Styles
+   ============================================================================= */
+
+.flow-canvas {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+}
+
+/* Override ReactFlow defaults */
+.react-flow {
+  background: var(--bg-canvas) !important;
+}
+
+/* Edges */
+.react-flow__edge-path {
+  stroke: var(--edge-color) !important;
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: var(--accent-primary) !important;
+}
+
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke: var(--accent-primary) !important;
+}
+
+/* Connection line (when dragging to create edge) */
+.react-flow__connection-line {
+  stroke: var(--accent-primary) !important;
+  stroke-width: 2px !important;
+  stroke-dasharray: 5 5;
+}
+
+/* Controls Panel */
+.flow-controls {
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  overflow: hidden;
+}
+
+.flow-controls button {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  color: var(--text-secondary) !important;
+  width: 28px !important;
+  height: 28px !important;
+  padding: 0 !important;
+}
+
+.flow-controls button:last-child {
+  border-bottom: none !important;
+}
+
+.flow-controls button:hover {
+  background: var(--bg-hover) !important;
+  color: var(--text-primary) !important;
+}
+
+.flow-controls button svg {
+  fill: currentColor !important;
+}
+
+/* MiniMap */
+.flow-minimap {
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  overflow: hidden;
+}
+
+.flow-minimap .react-flow__minimap-mask {
+  fill: var(--bg-canvas) !important;
+}
+
+/* Selection box */
+.react-flow__selection {
+  background: rgba(99, 102, 241, 0.1) !important;
+  border: 1px dashed var(--accent-primary) !important;
+}
+
+/* Attribution (optional: hide it) */
+.react-flow__attribution {
+  display: none;
+}
+
+/* Edge markers (arrows) */
+.react-flow__edge .react-flow__edge-path {
+  stroke: var(--edge-color);
+}
+
+.react-flow__edge.selected .react-flow__edge-path,
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke: var(--accent-primary);
+}
+
+/* Animated edges (optional: for pending recalc) */
+.react-flow__edge.animated .react-flow__edge-path {
+  stroke-dasharray: 5;
+  animation: edge-flow 0.5s linear infinite;
+}
+
+@keyframes edge-flow {
+  from {
+    stroke-dashoffset: 10;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+

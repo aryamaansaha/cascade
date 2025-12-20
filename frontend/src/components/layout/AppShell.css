@@ -1,0 +1,311 @@
+/* =============================================================================
+   App Shell Layout
+   ============================================================================= */
+
+.app-shell {
+  display: grid;
+  grid-template-columns: 240px 1fr 300px;
+  height: 100vh;
+  background: var(--bg-primary);
+}
+
+/* =============================================================================
+   Sidebars
+   ============================================================================= */
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+}
+
+.sidebar-right {
+  border-right: none;
+  border-left: 1px solid var(--border-color);
+}
+
+.sidebar-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar-header h1,
+.sidebar-header h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.logo {
+  font-size: 1.25rem !important;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem;
+}
+
+/* Section Header */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-tertiary);
+}
+
+/* Project List */
+.project-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.project-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: var(--text-secondary);
+}
+
+.project-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.project-item.active {
+  background: var(--accent-primary);
+  color: white;
+}
+
+.project-icon {
+  font-size: 1rem;
+}
+
+.project-name {
+  font-size: 0.875rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* =============================================================================
+   Canvas Container
+   ============================================================================= */
+
+.canvas-container {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background: var(--bg-canvas);
+}
+
+.canvas-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.empty-canvas {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-canvas-content {
+  text-align: center;
+  color: var(--text-tertiary);
+}
+
+.empty-icon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.empty-canvas-content h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+  color: var(--text-secondary);
+}
+
+.empty-canvas-content p {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+/* =============================================================================
+   Task Inspector
+   ============================================================================= */
+
+.task-inspector {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.form-group label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.form-group input,
+.form-group textarea {
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  transition: border-color 0.15s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+/* Info Section */
+.info-section {
+  padding: 0.75rem;
+  background: var(--bg-tertiary);
+  border-radius: 6px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.25rem 0;
+  font-size: 0.875rem;
+}
+
+.info-label {
+  color: var(--text-tertiary);
+}
+
+.info-value {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.version-id {
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+/* Danger Zone */
+.danger-zone {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+/* =============================================================================
+   Buttons
+   ============================================================================= */
+
+.btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-icon:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.btn-secondary {
+  padding: 0.5rem 1rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-secondary:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent-primary);
+}
+
+.btn-danger {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: 1px solid var(--danger);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--danger);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-danger:hover {
+  background: var(--danger);
+  color: white;
+}
+
+/* Empty State */
+.empty-state {
+  padding: 1rem;
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: 0.875rem;
+}
+
