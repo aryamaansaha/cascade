@@ -1,0 +1,21 @@
+# Core
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+
+# Database
+sqlmodel
+asyncpg
+sqlalchemy[asyncio]
+
+# Graph
+networkx
+
+# Background Jobs
+arq
+redis
+
+# Utilities
+python-dotenv
+
