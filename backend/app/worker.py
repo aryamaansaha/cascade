@@ -13,6 +13,11 @@ from arq.connections import RedisSettings, ArqRedis
 
 from app.config import get_settings
 from app.services.recalc import recalc_subtree
+from app.logging_config import setup_logging, get_logger
+
+# Initialize logging for the worker
+setup_logging()
+logger = get_logger(__name__)
 
 settings = get_settings()
 
@@ -29,12 +34,13 @@ def parse_redis_url(url: str) -> RedisSettings:
 
 async def startup(ctx: dict) -> None:
     """Worker startup - initialize database connection."""
-    print("Worker starting up...")
+    logger.info("ARQ Worker starting up...")
+    logger.info(f"Redis: {settings.redis_url}")
 
 
 async def shutdown(ctx: dict) -> None:
     """Worker shutdown - cleanup."""
-    print("Worker shutting down...")
+    logger.info("ARQ Worker shutting down...")
 
 
 class WorkerSettings:
@@ -56,6 +62,7 @@ async def get_arq_pool() -> ArqRedis:
     """Get or create the ARQ Redis pool for enqueuing jobs."""
     global _arq_pool
     if _arq_pool is None:
+        logger.debug("Creating ARQ Redis pool")
         _arq_pool = await create_pool(
             parse_redis_url(settings.redis_url)
         )
@@ -65,5 +72,5 @@ async def get_arq_pool() -> ArqRedis:
 async def enqueue_recalc(task_id: str, version_id: str) -> None:
     """Enqueue a recalculation job for a task and its descendants."""
     pool = await get_arq_pool()
+    logger.debug(f"Enqueuing recalc job: task={task_id[:8]}... version={version_id[:8]}...")
     await pool.enqueue_job("recalc_subtree", task_id, version_id)
-
