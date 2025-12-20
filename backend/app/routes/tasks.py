@@ -5,8 +5,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from app.database import get_session
-from app.models import Task, Project
+from app.models import Task, Project, Dependency
 from app.schemas import TaskCreate, TaskUpdate, TaskRead
+from app.worker import enqueue_recalc
 
 router = APIRouter()
 
@@ -109,8 +110,8 @@ async def update_task(
     await session.flush()
     await session.refresh(task)
     
-    # TODO: In Phase 3, enqueue recalc job:
-    # await arq_pool.enqueue_job('recalc_subtree', task_id, str(new_version_id))
+    # Enqueue recalc job for this task and its descendants
+    await enqueue_recalc(str(task_id), str(new_version_id))
     
     return task
 
@@ -133,7 +134,24 @@ async def delete_task(
             detail=f"Task {task_id} not found",
         )
     
-    # TODO: In Phase 3, identify affected successors and trigger recalc
+    # Find all direct successors before deletion - they need recalculation
+    successors_query = select(Dependency.successor_id).where(
+        Dependency.predecessor_id == task_id
+    )
+    successors_result = await session.execute(successors_query)
+    successor_ids = [row[0] for row in successors_result.all()]
     
+    # Delete the task (cascades to dependencies via FK)
     await session.delete(task)
+    await session.flush()
+    
+    # Trigger recalc for each successor (they may now start earlier)
+    for successor_id in successor_ids:
+        successor = await session.get(Task, successor_id)
+        if successor:
+            # Update version to trigger recalc
+            new_version_id = uuid.uuid4()
+            successor.calc_version_id = new_version_id
+            await session.flush()
+            await enqueue_recalc(str(successor_id), str(new_version_id))
 

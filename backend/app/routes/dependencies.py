@@ -7,6 +7,7 @@ from app.database import get_session
 from app.models import Task, Dependency
 from app.schemas import DependencyCreate, DependencyRead
 from app.services.graph import detect_cycle
+from app.worker import enqueue_recalc
 
 router = APIRouter()
 
@@ -86,8 +87,12 @@ async def create_dependency(
     await session.flush()
     await session.refresh(dependency)
     
-    # TODO: In Phase 3, trigger recalc on the successor
-    # await arq_pool.enqueue_job('recalc_subtree', successor.id, str(successor.calc_version_id))
+    # Update successor's version and trigger recalc
+    # The new dependency may push the successor's start date later
+    new_version_id = uuid.uuid4()
+    successor.calc_version_id = new_version_id
+    await session.flush()
+    await enqueue_recalc(str(successor.id), str(new_version_id))
     
     return dependency
 
@@ -149,7 +154,16 @@ async def delete_dependency(
             detail="Dependency not found",
         )
     
-    # TODO: In Phase 3, trigger recalc on the successor
+    # Get the successor task before deleting dependency
+    successor = await session.get(Task, successor_id)
     
     await session.delete(dependency)
+    await session.flush()
+    
+    # Trigger recalc on the successor - it may now start earlier
+    if successor:
+        new_version_id = uuid.uuid4()
+        successor.calc_version_id = new_version_id
+        await session.flush()
+        await enqueue_recalc(str(successor_id), str(new_version_id))
 
