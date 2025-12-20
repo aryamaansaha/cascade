@@ -19,3 +19,8 @@ redis
 # Utilities
 python-dotenv
 
+# Testing
+pytest
+pytest-asyncio
+httpx
+
