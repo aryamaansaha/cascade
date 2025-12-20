@@ -8,7 +8,7 @@ This implements the Critical Path Method (CPM) forward pass:
 """
 
 import uuid
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from typing import Any
 
 import networkx as nx
@@ -17,6 +17,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_session_context
 from app.models import Task
+from app.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 async def recalc_subtree(ctx: dict, root_task_id: str, version_id: str) -> str:
@@ -32,21 +35,32 @@ async def recalc_subtree(ctx: dict, root_task_id: str, version_id: str) -> str:
         Status message
     """
     root_id = uuid.UUID(root_task_id)
+    logger.info(f"recalc_subtree started: task={root_task_id[:8]}... version={version_id[:8]}...")
     
     async with get_session_context() as session:
         # Step 1: Guard clause - check if this job is stale
         root_task = await session.get(Task, root_id)
         if root_task is None:
+            logger.warning(f"Task {root_task_id[:8]}... not found - may have been deleted")
             return f"Task {root_task_id} not found - may have been deleted"
         
         if str(root_task.calc_version_id) != version_id:
+            logger.info(
+                f"Stale job discarded: task={root_task_id[:8]}... "
+                f"expected_version={version_id[:8]}... "
+                f"current_version={str(root_task.calc_version_id)[:8]}..."
+            )
             return f"Stale job: version mismatch (expected {version_id}, got {root_task.calc_version_id})"
         
         # Step 2: Fetch subgraph using recursive CTE
+        logger.debug(f"Fetching subgraph for task={root_task_id[:8]}...")
         tasks, dependencies = await fetch_subgraph(session, root_id, root_task.project_id)
         
         if not tasks:
+            logger.info(f"No tasks to recalculate for task={root_task_id[:8]}...")
             return "No tasks to recalculate"
+        
+        logger.debug(f"Subgraph contains {len(tasks)} tasks and {len(dependencies)} dependencies")
         
         # Step 3: Build NetworkX graph and perform topological sort
         graph = build_graph(tasks, dependencies)
@@ -54,16 +68,26 @@ async def recalc_subtree(ctx: dict, root_task_id: str, version_id: str) -> str:
         try:
             calculation_order = list(nx.topological_sort(graph))
         except nx.NetworkXUnfeasible:
+            logger.error(f"Cycle detected in task graph for task={root_task_id[:8]}...")
             return "Error: Cycle detected in task graph"
         
         # Step 4: Calculate dates using CPM forward pass
         updated_tasks = calculate_dates(graph, calculation_order, root_id)
         
         if not updated_tasks:
+            logger.info(f"No date changes needed for task={root_task_id[:8]}...")
             return "No date changes needed"
         
         # Step 5: Bulk update tasks
+        logger.info(f"Updating {len(updated_tasks)} tasks for task={root_task_id[:8]}...")
         await bulk_update_dates(session, updated_tasks)
+        
+        # Log the updates
+        for task_update in updated_tasks:
+            logger.debug(
+                f"  Updated task={str(task_update['id'])[:8]}... "
+                f"new_start_date={task_update['start_date']}"
+            )
         
         return f"Updated {len(updated_tasks)} tasks"
 
@@ -265,12 +289,9 @@ async def bulk_update_dates(
     if not updated_tasks:
         return
     
-    from datetime import datetime
-    
     for task_update in updated_tasks:
         task = await session.get(Task, task_update["id"])
         if task:
             task.start_date = task_update["start_date"]
             task.updated_at = datetime.utcnow()
             session.add(task)
-
