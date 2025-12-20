@@ -2,8 +2,9 @@
  * Main application shell with sidebar, canvas, and inspector layout.
  */
 
-import React from 'react';
+import { useState, useEffect } from 'react';
 import type { Project, Task } from '../../api/types';
+import { ConfirmModal } from '../ConfirmModal';
 import './AppShell.css';
 
 interface AppShellProps {
@@ -17,7 +18,7 @@ interface AppShellProps {
   // Right inspector
   selectedTask: Task | null;
   onUpdateTask: (id: string, updates: Partial<Task>) => void;
-  onDeleteTask: (id: string) => void;
+  onDeleteTask: (id: string) => Promise<void>;
   onCreateTask: () => void;
 }
 
@@ -32,6 +33,26 @@ export function AppShell({
   onDeleteTask,
   onCreateTask,
 }: AppShellProps) {
+  // Delete confirmation state
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteRequest = () => {
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedTask) return;
+    
+    setIsDeleting(true);
+    try {
+      await onDeleteTask(selectedTask.id);
+      setDeleteConfirmOpen(false);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div className="app-shell">
       {/* Left Sidebar - Projects */}
@@ -96,7 +117,7 @@ export function AppShell({
             <TaskInspector
               task={selectedTask}
               onUpdate={onUpdateTask}
-              onDelete={onDeleteTask}
+              onDeleteRequest={handleDeleteRequest}
             />
           ) : (
             <div className="empty-state">
@@ -105,6 +126,18 @@ export function AppShell({
           )}
         </div>
       </aside>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Task"
+        message={`Are you sure you want to delete "${selectedTask?.title}"? This action cannot be undone, and any dependent tasks may be affected.`}
+        confirmText="Delete Task"
+        confirmVariant="danger"
+        isLoading={isDeleting}
+      />
     </div>
   );
 }
@@ -116,17 +149,17 @@ export function AppShell({
 interface TaskInspectorProps {
   task: Task;
   onUpdate: (id: string, updates: Partial<Task>) => void;
-  onDelete: (id: string) => void;
+  onDeleteRequest: () => void;
 }
 
-function TaskInspector({ task, onUpdate, onDelete }: TaskInspectorProps) {
-  const [title, setTitle] = React.useState(task.title);
-  const [description, setDescription] = React.useState(task.description || '');
-  const [duration, setDuration] = React.useState(task.duration_days);
-  const [startDate, setStartDate] = React.useState(task.start_date);
+function TaskInspector({ task, onUpdate, onDeleteRequest }: TaskInspectorProps) {
+  const [title, setTitle] = useState(task.title);
+  const [description, setDescription] = useState(task.description || '');
+  const [duration, setDuration] = useState(task.duration_days);
+  const [startDate, setStartDate] = useState(task.start_date);
 
   // Update local state when task changes
-  React.useEffect(() => {
+  useEffect(() => {
     setTitle(task.title);
     setDescription(task.description || '');
     setDuration(task.duration_days);
@@ -217,14 +250,7 @@ function TaskInspector({ task, onUpdate, onDelete }: TaskInspectorProps) {
       </div>
 
       <div className="danger-zone">
-        <button
-          className="btn-danger"
-          onClick={() => {
-            if (confirm('Are you sure you want to delete this task?')) {
-              onDelete(task.id);
-            }
-          }}
-        >
+        <button className="btn-danger" onClick={onDeleteRequest}>
           Delete Task
         </button>
       </div>
@@ -233,4 +259,3 @@ function TaskInspector({ task, onUpdate, onDelete }: TaskInspectorProps) {
 }
 
 export default AppShell;
-
