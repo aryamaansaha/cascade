@@ -27,6 +27,10 @@ class Task(SQLModel, table=True):
     start_date: date = Field(default_factory=date.today)
     calc_version_id: uuid.UUID = Field(default_factory=uuid.uuid4)
     
+    # Canvas position (nullable = use auto-layout)
+    position_x: float | None = Field(default=None)
+    position_y: float | None = Field(default=None)
+    
     # Foreign keys
     project_id: uuid.UUID = Field(foreign_key="projects.id", index=True)
     

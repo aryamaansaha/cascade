@@ -38,6 +38,8 @@ export interface Task {
   end_date: string;   // Computed by backend
   calc_version_id: string;
   project_id: string;
+  position_x: number | null; // Canvas position (null = auto-layout)
+  position_y: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -48,6 +50,8 @@ export interface TaskCreate {
   duration_days?: number;
   start_date?: string | null;
   project_id: string;
+  position_x?: number | null;
+  position_y?: number | null;
 }
 
 export interface TaskUpdate {
@@ -55,6 +59,8 @@ export interface TaskUpdate {
   description?: string | null;
   duration_days?: number;
   start_date?: string;
+  position_x?: number | null;
+  position_y?: number | null;
 }
 
 // =============================================================================

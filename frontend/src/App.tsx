@@ -134,6 +134,20 @@ function CascadeApp() {
     [createDependencyMutation]
   );
 
+  const handleUpdateTaskPosition = useCallback(
+    async (taskId: string, x: number, y: number) => {
+      try {
+        await updateTaskMutation.mutateAsync({
+          id: taskId,
+          data: { position_x: x, position_y: y },
+        });
+      } catch (error) {
+        console.error('Failed to save position:', error);
+      }
+    },
+    [updateTaskMutation]
+  );
+
   if (projectsLoading) {
     return (
       <div className="loading-screen">
@@ -162,6 +176,7 @@ function CascadeApp() {
             selectedTaskId={selectedTaskId}
             onSelectTask={handleSelectTask}
             onCreateDependency={handleCreateDependency}
+            onUpdateTaskPosition={handleUpdateTaskPosition}
           />
         )}
       </AppShell>

@@ -10,6 +10,8 @@ class TaskCreate(BaseModel):
     duration_days: int = 1
     start_date: date | None = None  # Defaults to today if not provided
     project_id: uuid.UUID
+    position_x: float | None = None  # Canvas position (null = auto-layout)
+    position_y: float | None = None
 
 
 class TaskUpdate(BaseModel):
@@ -18,6 +20,8 @@ class TaskUpdate(BaseModel):
     description: str | None = None
     duration_days: int | None = None
     start_date: date | None = None
+    position_x: float | None = None
+    position_y: float | None = None
 
 
 class TaskRead(BaseModel):
@@ -29,6 +33,8 @@ class TaskRead(BaseModel):
     start_date: date
     calc_version_id: uuid.UUID
     project_id: uuid.UUID
+    position_x: float | None
+    position_y: float | None
     created_at: datetime
     updated_at: datetime
     
@@ -50,4 +56,3 @@ class TaskRead(BaseModel):
         return self.start_date + timedelta(days=self.duration_days - 1)
     
     model_config = {"from_attributes": True}
-
