@@ -12,6 +12,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { AppShell } from './components/layout/AppShell';
 import { FlowCanvas } from './components/graph/FlowCanvas';
+import { CreateProjectModal } from './components/CreateProjectModal';
+import { CreateTaskModal } from './components/CreateTaskModal';
 import {
   useProjects,
   useCreateProject,
@@ -22,7 +24,7 @@ import {
   useDependencies,
   useCreateDependency,
 } from './hooks/useProjectData';
-import type { Task, ApiError } from './api/types';
+import type { Task, TaskCreate, ProjectCreate, ApiError } from './api/types';
 
 import './index.css';
 
@@ -49,6 +51,10 @@ function CascadeApp() {
   // State
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  
+  // Modal state
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 
   // Data fetching
   const { data: projects = [], isLoading: projectsLoading } = useProjects();
@@ -73,41 +79,19 @@ function CascadeApp() {
     setSelectedTaskId(null);
   }, []);
 
-  const handleCreateProject = useCallback(async () => {
-    const name = prompt('Enter project name:');
-    if (name) {
-      try {
-        const project = await createProjectMutation.mutateAsync({ name });
-        setSelectedProjectId(project.id);
-      } catch (error) {
-        const apiError = error as ApiError;
-        alert(`Failed to create project: ${apiError.message}`);
-      }
-    }
+  const handleCreateProject = useCallback(async (data: ProjectCreate) => {
+    const project = await createProjectMutation.mutateAsync(data);
+    setSelectedProjectId(project.id);
   }, [createProjectMutation]);
 
   const handleSelectTask = useCallback((taskId: string | null) => {
     setSelectedTaskId(taskId);
   }, []);
 
-  const handleCreateTask = useCallback(async () => {
-    if (!selectedProjectId) return;
-
-    const title = prompt('Enter task title:');
-    if (title) {
-      try {
-        const task = await createTaskMutation.mutateAsync({
-          title,
-          project_id: selectedProjectId,
-          duration_days: 1,
-        });
-        setSelectedTaskId(task.id);
-      } catch (error) {
-        const apiError = error as ApiError;
-        alert(`Failed to create task: ${apiError.message}`);
-      }
-    }
-  }, [selectedProjectId, createTaskMutation]);
+  const handleCreateTask = useCallback(async (data: TaskCreate) => {
+    const task = await createTaskMutation.mutateAsync(data);
+    setSelectedTaskId(task.id);
+  }, [createTaskMutation]);
 
   const handleUpdateTask = useCallback(
     async (id: string, updates: Partial<Task>) => {
@@ -115,7 +99,7 @@ function CascadeApp() {
         await updateTaskMutation.mutateAsync({ id, data: updates });
       } catch (error) {
         const apiError = error as ApiError;
-        alert(`Failed to update task: ${apiError.message}`);
+        console.error('Failed to update task:', apiError.message);
       }
     },
     [updateTaskMutation]
@@ -128,7 +112,7 @@ function CascadeApp() {
         setSelectedTaskId(null);
       } catch (error) {
         const apiError = error as ApiError;
-        alert(`Failed to delete task: ${apiError.message}`);
+        console.error('Failed to delete task:', apiError.message);
       }
     },
     [deleteTaskMutation]
@@ -143,7 +127,8 @@ function CascadeApp() {
         });
       } catch (error) {
         const apiError = error as ApiError;
-        alert(`Cannot create dependency: ${apiError.message}`);
+        // TODO: Show toast notification instead
+        console.error('Cannot create dependency:', apiError.message);
       }
     },
     [createDependencyMutation]
@@ -159,25 +144,43 @@ function CascadeApp() {
   }
 
   return (
-    <AppShell
-      projects={projects}
-      selectedProjectId={selectedProjectId}
-      onSelectProject={handleSelectProject}
-      onCreateProject={handleCreateProject}
-      selectedTask={selectedTask}
-      onUpdateTask={handleUpdateTask}
-      onDeleteTask={handleDeleteTask}
-      onCreateTask={handleCreateTask}
-    >
+    <>
+      <AppShell
+        projects={projects}
+        selectedProjectId={selectedProjectId}
+        onSelectProject={handleSelectProject}
+        onCreateProject={() => setIsProjectModalOpen(true)}
+        selectedTask={selectedTask}
+        onUpdateTask={handleUpdateTask}
+        onDeleteTask={handleDeleteTask}
+        onCreateTask={() => setIsTaskModalOpen(true)}
+      >
+        {selectedProjectId && (
+          <FlowCanvas
+            tasks={tasks}
+            dependencies={dependencies}
+            selectedTaskId={selectedTaskId}
+            onSelectTask={handleSelectTask}
+            onCreateDependency={handleCreateDependency}
+          />
+        )}
+      </AppShell>
+
+      {/* Modals */}
+      <CreateProjectModal
+        isOpen={isProjectModalOpen}
+        onClose={() => setIsProjectModalOpen(false)}
+        onSubmit={handleCreateProject}
+      />
+
       {selectedProjectId && (
-        <FlowCanvas
-          tasks={tasks}
-          dependencies={dependencies}
-          selectedTaskId={selectedTaskId}
-          onSelectTask={handleSelectTask}
-          onCreateDependency={handleCreateDependency}
+        <CreateTaskModal
+          isOpen={isTaskModalOpen}
+          onClose={() => setIsTaskModalOpen(false)}
+          onSubmit={handleCreateTask}
+          projectId={selectedProjectId}
         />
       )}
-    </AppShell>
+    </>
   );
 }
