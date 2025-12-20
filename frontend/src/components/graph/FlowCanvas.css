@@ -29,8 +29,9 @@
 /* Connection line (when dragging to create edge) */
 .react-flow__connection-line {
   stroke: var(--accent-primary) !important;
-  stroke-width: 2px !important;
-  stroke-dasharray: 5 5;
+  stroke-width: 3px !important;
+  stroke-dasharray: 8 4;
+  filter: drop-shadow(0 0 4px var(--accent-primary));
 }
 
 /* Controls Panel */

@@ -93,6 +93,9 @@ export function AppShell({
               <button className="btn-secondary" onClick={onCreateTask}>
                 + New Task
               </button>
+              <span className="toolbar-hint">
+                💡 Drag from a task's right handle to another task's left handle to create a dependency
+              </span>
             </div>
             {children}
           </>
