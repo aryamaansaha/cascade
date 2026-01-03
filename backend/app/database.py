@@ -10,7 +10,7 @@ settings = get_settings()
 # Create async engine with proper pool configuration
 engine = create_async_engine(
     settings.database_url,
-    echo=settings.debug,
+    echo=False,  # Disable SQL query logging (too verbose with large arrays)
     future=True,
     pool_size=10,
     max_overflow=20,
