@@ -50,6 +50,7 @@ interface FlowCanvasProps {
   dependencies: Dependency[];
   selectedTaskId: string | null;
   criticalPathTaskIds: Set<string>;
+  searchTerm: string;
   onSelectTask: (taskId: string | null) => void;
   onCreateDependency: (predecessorId: string, successorId: string) => void;
   onDeleteDependency: (predecessorId: string, successorId: string) => void;
@@ -69,18 +70,35 @@ function getAutoLayoutPosition(index: number): { x: number; y: number } {
 }
 
 /**
+ * Check if a task matches the search term
+ */
+function taskMatchesSearch(task: Task, searchTerm: string): boolean {
+  if (!searchTerm.trim()) return true;
+  const term = searchTerm.toLowerCase();
+  return (
+    task.title.toLowerCase().includes(term) ||
+    (task.description?.toLowerCase().includes(term) ?? false)
+  );
+}
+
+/**
  * Convert tasks to ReactFlow nodes, using stored positions if available
  */
 function tasksToNodes(
   tasks: Task[],
   selectedTaskId: string | null,
-  criticalPathTaskIds: Set<string>
+  criticalPathTaskIds: Set<string>,
+  searchTerm: string
 ): Node<TaskNodeData>[] {
+  const hasSearch = searchTerm.trim().length > 0;
+  
   return tasks.map((task, index) => {
     // Use stored position if available, otherwise auto-layout
     const position = (task.position_x !== null && task.position_y !== null)
       ? { x: task.position_x, y: task.position_y }
       : getAutoLayoutPosition(index);
+    
+    const isSearchMatch = taskMatchesSearch(task, searchTerm);
     
     return {
       id: task.id,
@@ -90,6 +108,8 @@ function tasksToNodes(
         task,
         isSelected: task.id === selectedTaskId,
         isCritical: criticalPathTaskIds.has(task.id),
+        isSearchMatch,
+        isDimmed: hasSearch && !isSearchMatch,
       } as TaskNodeData,
       selected: task.id === selectedTaskId,
     };
@@ -132,6 +152,7 @@ function FlowCanvasInner({
   dependencies,
   selectedTaskId,
   criticalPathTaskIds,
+  searchTerm,
   onSelectTask,
   onCreateDependency,
   onDeleteDependency,
@@ -144,8 +165,8 @@ function FlowCanvasInner({
   
   // Convert data to ReactFlow format
   const initialNodes = useMemo(
-    () => tasksToNodes(tasks, selectedTaskId, criticalPathTaskIds),
-    [tasks, selectedTaskId, criticalPathTaskIds]
+    () => tasksToNodes(tasks, selectedTaskId, criticalPathTaskIds, searchTerm),
+    [tasks, selectedTaskId, criticalPathTaskIds, searchTerm]
   );
   
   const initialEdges = useMemo(
@@ -161,6 +182,7 @@ function FlowCanvasInner({
   useEffect(() => {
     const currentTaskIds = new Set(tasks.map(t => t.id));
     const prevTaskIds = prevTaskIdsRef.current;
+    const hasSearch = searchTerm.trim().length > 0;
     
     // Check if tasks were added or removed
     const tasksChanged = 
@@ -169,7 +191,7 @@ function FlowCanvasInner({
     
     if (tasksChanged) {
       // Tasks were added/removed - do a full reset
-      setNodes(tasksToNodes(tasks, selectedTaskId, criticalPathTaskIds) as Node[]);
+      setNodes(tasksToNodes(tasks, selectedTaskId, criticalPathTaskIds, searchTerm) as Node[]);
       // Fit view after a short delay to ensure nodes are rendered
       setTimeout(() => fitView({ padding: 0.2 }), 50);
     } else {
@@ -179,12 +201,16 @@ function FlowCanvasInner({
           const task = tasks.find(t => t.id === node.id);
           if (!task) return node;
           
+          const isSearchMatch = taskMatchesSearch(task, searchTerm);
+          
           return {
             ...node,
             data: {
               task,
               isSelected: task.id === selectedTaskId,
               isCritical: criticalPathTaskIds.has(task.id),
+              isSearchMatch,
+              isDimmed: hasSearch && !isSearchMatch,
             } as TaskNodeData,
             selected: task.id === selectedTaskId,
           };
@@ -193,7 +219,7 @@ function FlowCanvasInner({
     }
     
     prevTaskIdsRef.current = currentTaskIds;
-  }, [tasks, selectedTaskId, criticalPathTaskIds, setNodes, fitView]);
+  }, [tasks, selectedTaskId, criticalPathTaskIds, searchTerm, setNodes, fitView]);
 
   // Update edges when dependencies change
   useEffect(() => {

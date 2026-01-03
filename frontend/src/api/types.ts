@@ -166,5 +166,7 @@ export interface TaskNodeData {
   task: Task;
   isSelected: boolean;
   isCritical: boolean;
+  isSearchMatch: boolean;
+  isDimmed: boolean;
   [key: string]: unknown;
 }

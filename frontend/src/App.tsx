@@ -57,6 +57,7 @@ function CascadeApp() {
   // State
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
   
   // Modal state
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
@@ -293,6 +294,8 @@ function CascadeApp() {
         selectedProjectId={selectedProjectId}
         projectStatus={projectStatus}
         criticalPath={criticalPath}
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
         onSelectProject={handleSelectProject}
         onCreateProject={() => setIsProjectModalOpen(true)}
         onDeleteProject={handleDeleteProject}
@@ -309,6 +312,7 @@ function CascadeApp() {
             dependencies={dependencies}
             selectedTaskId={selectedTaskId}
             criticalPathTaskIds={criticalPathTaskIds}
+            searchTerm={searchTerm}
             onSelectTask={handleSelectTask}
             onCreateDependency={handleCreateDependency}
             onDeleteDependency={handleDeleteDependency}

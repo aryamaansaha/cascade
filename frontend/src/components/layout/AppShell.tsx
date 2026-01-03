@@ -15,6 +15,8 @@ interface AppShellProps {
   selectedProjectId: string | null;
   projectStatus?: ProjectStatus;
   criticalPath?: CriticalPathAnalysis;
+  searchTerm: string;
+  onSearchChange: (term: string) => void;
   onSelectProject: (id: string) => void;
   onCreateProject: () => void;
   onDeleteProject: (id: string) => Promise<void>;
@@ -34,6 +36,8 @@ export function AppShell({
   selectedProjectId,
   projectStatus,
   criticalPath,
+  searchTerm,
+  onSearchChange,
   onSelectProject,
   onCreateProject,
   onDeleteProject,
@@ -137,8 +141,26 @@ export function AppShell({
               <button className="btn-secondary" onClick={onCreateTask}>
                 + New Task
               </button>
+              <div className="search-container">
+                <input
+                  type="text"
+                  className="search-input"
+                  placeholder="🔍 Search tasks..."
+                  value={searchTerm}
+                  onChange={(e) => onSearchChange(e.target.value)}
+                />
+                {searchTerm && (
+                  <button
+                    className="search-clear"
+                    onClick={() => onSearchChange('')}
+                    title="Clear search"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
               <span className="toolbar-hint">
-                💡 Drag between handles to connect tasks • Click an edge + Delete to remove
+                💡 Drag between handles to connect • Ctrl+Z to undo
               </span>
             </div>
             

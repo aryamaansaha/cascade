@@ -19,7 +19,7 @@ type TaskNodeProps = {
 };
 
 export function TaskNode({ data, selected }: TaskNodeProps) {
-  const { task, isCritical } = data;
+  const { task, isCritical, isDimmed } = data;
   
   // Format date for display (e.g., "Dec 19")
   const formatDate = (dateStr: string) => {
@@ -31,6 +31,7 @@ export function TaskNode({ data, selected }: TaskNodeProps) {
     'task-node',
     selected ? 'selected' : '',
     isCritical ? 'critical' : '',
+    isDimmed ? 'dimmed' : '',
   ].filter(Boolean).join(' ');
   
   return (
