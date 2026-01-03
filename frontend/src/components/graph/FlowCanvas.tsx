@@ -17,6 +17,8 @@ import {
   MiniMap,
   useNodesState,
   useEdgesState,
+  useReactFlow,
+  ReactFlowProvider,
   type Node,
   type Edge,
   type OnConnect,
@@ -108,7 +110,17 @@ function dependenciesToEdges(dependencies: Dependency[]): Edge[] {
   }));
 }
 
-export function FlowCanvas({
+export function FlowCanvas(props: FlowCanvasProps) {
+  return (
+    <div className="flow-canvas">
+      <ReactFlowProvider>
+        <FlowCanvasInner {...props} />
+      </ReactFlowProvider>
+    </div>
+  );
+}
+
+function FlowCanvasInner({
   tasks,
   dependencies,
   selectedTaskId,
@@ -118,6 +130,7 @@ export function FlowCanvas({
 }: FlowCanvasProps) {
   // Track task IDs to detect additions/removals
   const prevTaskIdsRef = useRef<Set<string>>(new Set());
+  const { fitView } = useReactFlow();
   
   // Convert data to ReactFlow format
   const initialNodes = useMemo(
@@ -147,6 +160,8 @@ export function FlowCanvas({
     if (tasksChanged) {
       // Tasks were added/removed - do a full reset
       setNodes(tasksToNodes(tasks, selectedTaskId) as Node[]);
+      // Fit view after a short delay to ensure nodes are rendered
+      setTimeout(() => fitView({ padding: 0.2 }), 50);
     } else {
       // Only task data changed - update data but preserve positions
       setNodes(currentNodes => 
@@ -167,7 +182,7 @@ export function FlowCanvas({
     }
     
     prevTaskIdsRef.current = currentTaskIds;
-  }, [tasks, selectedTaskId, setNodes]);
+  }, [tasks, selectedTaskId, setNodes, fitView]);
 
   // Update edges when dependencies change
   useEffect(() => {
@@ -206,42 +221,40 @@ export function FlowCanvas({
   );
 
   return (
-    <div className="flow-canvas">
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        onNodeClick={onNodeClick}
-        onNodeDragStop={onNodeDragStop}
-        onPaneClick={onPaneClick}
-        nodeTypes={nodeTypes}
-        connectionMode={ConnectionMode.Loose}
-        fitView
-        fitViewOptions={{ padding: 0.2 }}
-        defaultEdgeOptions={{
-          type: 'smoothstep',
-          style: { strokeWidth: 2 },
+    <ReactFlow
+      nodes={nodes}
+      edges={edges}
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
+      onConnect={onConnect}
+      onNodeClick={onNodeClick}
+      onNodeDragStop={onNodeDragStop}
+      onPaneClick={onPaneClick}
+      nodeTypes={nodeTypes}
+      connectionMode={ConnectionMode.Loose}
+      fitView
+      fitViewOptions={{ padding: 0.2 }}
+      defaultEdgeOptions={{
+        type: 'smoothstep',
+        style: { strokeWidth: 2 },
+      }}
+    >
+      <Background
+        variant={BackgroundVariant.Dots}
+        gap={20}
+        size={1}
+        color="var(--grid-color)"
+      />
+      <Controls className="flow-controls" />
+      <MiniMap
+        className="flow-minimap"
+        nodeColor={(node) => {
+          if (node.selected) return 'var(--accent-primary)';
+          return 'var(--node-bg)';
         }}
-      >
-        <Background
-          variant={BackgroundVariant.Dots}
-          gap={20}
-          size={1}
-          color="var(--grid-color)"
-        />
-        <Controls className="flow-controls" />
-        <MiniMap
-          className="flow-minimap"
-          nodeColor={(node) => {
-            if (node.selected) return 'var(--accent-primary)';
-            return 'var(--node-bg)';
-          }}
-          maskColor="rgba(0, 0, 0, 0.2)"
-        />
-      </ReactFlow>
-    </div>
+        maskColor="rgba(0, 0, 0, 0.2)"
+      />
+    </ReactFlow>
   );
 }
 

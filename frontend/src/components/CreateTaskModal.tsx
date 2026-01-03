@@ -58,7 +58,11 @@ export function CreateTaskModal({
       });
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create task');
+      // Handle both Error objects and ApiError objects
+      const message = err instanceof Error 
+        ? err.message 
+        : (err as { message?: string })?.message || 'Failed to create task';
+      setError(message);
     } finally {
       setIsSubmitting(false);
     }
