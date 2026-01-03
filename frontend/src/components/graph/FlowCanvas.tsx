@@ -290,18 +290,23 @@ function FlowCanvasInner({
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={onNodeClick}
-      onEdgeClick={onEdgeClick}
+        onEdgeClick={onEdgeClick}
         onNodeDragStop={onNodeDragStop}
-      onPaneClick={handlePaneClick}
+        onPaneClick={handlePaneClick}
         nodeTypes={nodeTypes}
         connectionMode={ConnectionMode.Loose}
+        connectionRadius={40}
         fitView
         fitViewOptions={{ padding: 0.2 }}
         defaultEdgeOptions={{
           type: 'smoothstep',
           style: { strokeWidth: 2 },
         }}
-      deleteKeyCode={null}
+        connectionLineStyle={{
+          strokeWidth: 2,
+          stroke: 'var(--accent-primary)',
+        }}
+        deleteKeyCode={null}
       >
         <Background
           variant={BackgroundVariant.Dots}

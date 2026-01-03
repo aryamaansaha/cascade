@@ -119,16 +119,18 @@
 
 /* Handles - Connection points for dependencies */
 .task-handle {
-  width: 14px !important;
-  height: 14px !important;
+  width: 16px !important;
+  height: 16px !important;
   background: var(--bg-tertiary) !important;
   border: 2px solid var(--accent-primary) !important;
   transition: all 0.15s ease;
-  opacity: 0.6;
+  opacity: 0.8;
+  cursor: crosshair;
 }
 
 .task-node:hover .task-handle {
   opacity: 1;
+  transform: scale(1.1);
 }
 
 .task-handle:hover {
@@ -136,7 +138,6 @@
   border-color: var(--accent-primary) !important;
   transform: scale(1.3);
   opacity: 1;
-  cursor: crosshair;
 }
 
 /* Pulse animation on hover to indicate draggable */
@@ -161,11 +162,11 @@
 }
 
 .task-handle-input {
-  left: -7px !important;
+  left: -8px !important;
 }
 
 .task-handle-output {
-  right: -7px !important;
+  right: -8px !important;
 }
 
 /* Handle labels on hover */
