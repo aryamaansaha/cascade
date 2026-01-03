@@ -5,6 +5,7 @@
 import { useState, useEffect } from 'react';
 import type { Project, Task, Dependency, ProjectStatus, CriticalPathAnalysis } from '../../api/types';
 import { ConfirmModal } from '../ConfirmModal';
+import { SimulationModal } from '../SimulationModal';
 import { getEarliestStartDate, formatDateLong } from '../../utils/scheduling';
 import './AppShell.css';
 
@@ -171,6 +172,7 @@ export function AppShell({
               tasks={tasks}
               dependencies={dependencies}
               criticalPath={criticalPath}
+              projectId={selectedProjectId!}
               onUpdate={onUpdateTask}
               onDeleteRequest={handleDeleteTaskRequest}
             />
@@ -221,15 +223,17 @@ interface TaskInspectorProps {
   tasks: Task[];
   dependencies: Dependency[];
   criticalPath?: CriticalPathAnalysis;
+  projectId: string;
   onUpdate: (id: string, updates: Partial<Task>) => void;
   onDeleteRequest: () => void;
 }
 
-function TaskInspector({ task, tasks, dependencies, criticalPath, onUpdate, onDeleteRequest }: TaskInspectorProps) {
+function TaskInspector({ task, tasks, dependencies, criticalPath, projectId, onUpdate, onDeleteRequest }: TaskInspectorProps) {
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || '');
   const [duration, setDuration] = useState(task.duration_days);
   const [startDate, setStartDate] = useState(task.start_date);
+  const [isSimulationOpen, setIsSimulationOpen] = useState(false);
 
   // Calculate earliest valid start date (if task has predecessors)
   const earliestStart = getEarliestStartDate(task.id, tasks, dependencies);
@@ -348,11 +352,24 @@ function TaskInspector({ task, tasks, dependencies, criticalPath, onUpdate, onDe
         </div>
       </div>
 
+      <div className="action-buttons">
+        <button className="btn-whatif" onClick={() => setIsSimulationOpen(true)}>
+          🔮 What-If
+        </button>
+      </div>
+
       <div className="danger-zone">
         <button className="btn-danger" onClick={onDeleteRequest}>
           Delete Task
         </button>
       </div>
+      
+      <SimulationModal
+        isOpen={isSimulationOpen}
+        onClose={() => setIsSimulationOpen(false)}
+        task={task}
+        projectId={projectId}
+      />
     </div>
   );
 }

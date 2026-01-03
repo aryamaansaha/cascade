@@ -291,9 +291,38 @@
   color: var(--text-tertiary);
 }
 
+/* Action Buttons */
+.action-buttons {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.btn-whatif {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.625rem 1rem;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(234, 179, 8, 0.1) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-whatif:hover {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(234, 179, 8, 0.15) 100%);
+  border-color: rgba(245, 158, 11, 0.6);
+}
+
 /* Danger Zone */
 .danger-zone {
-  margin-top: auto;
+  margin-top: 1rem;
   padding-top: 1rem;
   border-top: 1px solid var(--border-color);
 }

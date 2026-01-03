@@ -59,3 +59,40 @@ class CriticalPathAnalysis(BaseModel):
     critical_path_task_ids: list[uuid.UUID]
     task_analyses: list[TaskCriticalAnalysis]
 
+
+# =============================================================================
+# What-If Simulation Schemas
+# =============================================================================
+
+class TaskChangeInput(BaseModel):
+    """A hypothetical change to a task for simulation."""
+    task_id: uuid.UUID
+    start_date: date | None = None
+    duration_days: int | None = None
+
+
+class SimulationRequest(BaseModel):
+    """Request to simulate what-if changes."""
+    changes: list[TaskChangeInput]
+
+
+class TaskImpactResponse(BaseModel):
+    """Impact of simulation on a single task."""
+    task_id: uuid.UUID
+    title: str
+    original_start: date
+    original_end: date
+    simulated_start: date
+    simulated_end: date
+    delta_days: int  # Positive = delayed
+
+
+class SimulationResponse(BaseModel):
+    """Response from what-if simulation."""
+    project_id: uuid.UUID
+    original_end_date: date
+    simulated_end_date: date
+    impact_days: int  # How many days the project end moved
+    affected_tasks: list[TaskImpactResponse]
+    total_tasks: int
+

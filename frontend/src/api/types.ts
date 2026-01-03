@@ -57,6 +57,39 @@ export interface CriticalPathAnalysis {
 }
 
 // =============================================================================
+// What-If Simulation Types
+// =============================================================================
+
+export interface TaskChangeInput {
+  task_id: string;
+  start_date?: string | null;
+  duration_days?: number | null;
+}
+
+export interface SimulationRequest {
+  changes: TaskChangeInput[];
+}
+
+export interface TaskImpact {
+  task_id: string;
+  title: string;
+  original_start: string;
+  original_end: string;
+  simulated_start: string;
+  simulated_end: string;
+  delta_days: number;
+}
+
+export interface SimulationResult {
+  project_id: string;
+  original_end_date: string;
+  simulated_end_date: string;
+  impact_days: number;
+  affected_tasks: TaskImpact[];
+  total_tasks: number;
+}
+
+// =============================================================================
 // Task Types
 // =============================================================================
 

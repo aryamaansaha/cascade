@@ -1,0 +1,193 @@
+/* =============================================================================
+   Simulation Modal Styles
+   ============================================================================= */
+
+.simulation-modal {
+  max-width: 500px;
+  width: 90%;
+}
+
+.simulation-modal .modal-description {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  margin-bottom: 1.5rem;
+}
+
+.simulation-inputs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.simulation-inputs .form-group {
+  flex: 1;
+}
+
+.input-with-compare {
+  position: relative;
+}
+
+.input-with-compare input {
+  width: 100%;
+}
+
+.original-value {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.7rem;
+  color: var(--text-tertiary);
+  background: var(--bg-secondary);
+  padding: 0.125rem 0.375rem;
+  border-radius: 3px;
+}
+
+.simulation-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.simulation-result {
+  border-top: 1px solid var(--border-color);
+  padding-top: 1.5rem;
+}
+
+.impact-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.impact-banner.negative {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(239, 68, 68, 0.05) 100%);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.impact-banner.positive {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(34, 197, 94, 0.05) 100%);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.impact-banner.neutral {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+}
+
+.impact-value {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.impact-banner.negative .impact-value {
+  color: var(--danger);
+}
+
+.impact-banner.positive .impact-value {
+  color: var(--success);
+}
+
+.impact-label {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 0.25rem;
+}
+
+.result-details {
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.375rem 0;
+  font-size: 0.875rem;
+}
+
+.detail-row span:first-child {
+  color: var(--text-secondary);
+}
+
+.mono {
+  font-family: monospace;
+}
+
+.text-danger {
+  color: var(--danger) !important;
+  font-weight: 600;
+}
+
+.affected-list h4 {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin: 0 0 0.75rem 0;
+  color: var(--text-secondary);
+}
+
+.affected-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.affected-list li {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.8rem;
+}
+
+.affected-list li:last-child {
+  border-bottom: none;
+}
+
+.affected-list .task-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-primary);
+}
+
+.affected-list .task-dates {
+  color: var(--text-tertiary);
+  font-family: monospace;
+  font-size: 0.75rem;
+}
+
+.affected-list .delta {
+  font-weight: 600;
+  font-family: monospace;
+  min-width: 40px;
+  text-align: right;
+}
+
+.affected-list .delta.delayed {
+  color: var(--danger);
+}
+
+.affected-list .delta.earlier {
+  color: var(--success);
+}
+
+.no-impact {
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: 0.875rem;
+  padding: 1rem;
+}
+

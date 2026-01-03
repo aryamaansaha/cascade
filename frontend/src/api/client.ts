@@ -9,6 +9,8 @@ import type {
   ProjectUpdate,
   ProjectStatus,
   CriticalPathAnalysis,
+  SimulationRequest,
+  SimulationResult,
   Task,
   TaskCreate,
   TaskUpdate,
@@ -80,6 +82,11 @@ export const projectApi = {
 
   getCriticalPath: async (id: string): Promise<CriticalPathAnalysis> => {
     const response = await api.get<CriticalPathAnalysis>(`/projects/${id}/critical-path`);
+    return response.data;
+  },
+
+  simulate: async (id: string, request: SimulationRequest): Promise<SimulationResult> => {
+    const response = await api.post<SimulationResult>(`/projects/${id}/simulate`, request);
     return response.data;
   },
 };

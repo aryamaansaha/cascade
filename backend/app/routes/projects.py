@@ -18,10 +18,14 @@ from app.schemas import (
     ProjectStatus,
     CriticalPathAnalysis,
     TaskCriticalAnalysis,
+    SimulationRequest,
+    SimulationResponse,
+    TaskImpactResponse,
 )
 from app.exceptions import NotFoundError
 from app.logging_config import get_logger
 from app.services.critical_path import analyze_critical_path
+from app.services.simulation import simulate_changes, TaskChange
 
 logger = get_logger(__name__)
 
@@ -226,4 +230,76 @@ async def get_critical_path(
             )
             for ta in analysis.task_analyses
         ],
+    )
+
+
+@router.post("/{project_id}/simulate", response_model=SimulationResponse)
+async def simulate_project_changes(
+    project_id: uuid.UUID,
+    request: SimulationRequest,
+    session: AsyncSession = Depends(get_session),
+) -> SimulationResponse:
+    """
+    Simulate what-if changes to tasks without persisting.
+    
+    Accepts a list of hypothetical changes (start_date and/or duration_days)
+    and returns the ripple effect on the project schedule.
+    
+    Example:
+        POST /projects/{id}/simulate
+        {
+            "changes": [
+                {"task_id": "abc...", "start_date": "2026-02-01"},
+                {"task_id": "def...", "duration_days": 10}
+            ]
+        }
+    
+    Returns:
+    - original_end_date: Project end before changes
+    - simulated_end_date: Project end after changes
+    - impact_days: How many days the project shifted
+    - affected_tasks: List of tasks with changed dates
+    """
+    project = await session.get(Project, project_id)
+    if not project:
+        raise NotFoundError("Project", str(project_id))
+    
+    # Convert request to service layer objects
+    changes = [
+        TaskChange(
+            task_id=c.task_id,
+            start_date=c.start_date,
+            duration_days=c.duration_days,
+        )
+        for c in request.changes
+    ]
+    
+    logger.info(f"Simulating {len(changes)} changes for project {project_id}")
+    
+    result = await simulate_changes(session, project_id, changes)
+    
+    logger.info(
+        f"Simulation result: project end moved {result.impact_days} days "
+        f"({result.original_end_date} → {result.simulated_end_date}), "
+        f"{len(result.affected_tasks)} tasks affected"
+    )
+    
+    return SimulationResponse(
+        project_id=result.project_id,
+        original_end_date=result.original_end_date,
+        simulated_end_date=result.simulated_end_date,
+        impact_days=result.impact_days,
+        affected_tasks=[
+            TaskImpactResponse(
+                task_id=t.task_id,
+                title=t.title,
+                original_start=t.original_start,
+                original_end=t.original_end,
+                simulated_start=t.simulated_start,
+                simulated_end=t.simulated_end,
+                delta_days=t.delta_days,
+            )
+            for t in result.affected_tasks
+        ],
+        total_tasks=result.total_tasks,
     )

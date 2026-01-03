@@ -10,6 +10,7 @@ import type {
   TaskCreate,
   TaskUpdate,
   DependencyCreate,
+  SimulationRequest,
 } from '../api/types';
 
 // =============================================================================
@@ -97,6 +98,13 @@ export function useCriticalPath(projectId?: string) {
     enabled: !!projectId,
     // Poll every 3 seconds to update critical path
     refetchInterval: 3000,
+  });
+}
+
+export function useSimulation() {
+  return useMutation({
+    mutationFn: ({ projectId, request }: { projectId: string; request: SimulationRequest }) =>
+      projectApi.simulate(projectId, request),
   });
 }
 
