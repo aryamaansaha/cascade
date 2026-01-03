@@ -8,7 +8,7 @@
 
 ## What is Cascade?
 
-Cascade helps you plan projects by visualizing task dependencies as a directed graph. When you change a task's date or duration, dependent tasks automatically adjust — just like a cascade of dominoes.
+Cascade helps you plan projects by visualizing task dependencies as a directed graph. When you change a task's date or duration, dependent tasks automatically adjust - just like a cascade of dominoes.
 
 ## Key Features
 
@@ -20,7 +20,7 @@ Cascade helps you plan projects by visualizing task dependencies as a directed g
 ### ⚡ Critical Path Analysis
 - Automatically identifies which tasks are on the critical path
 - Shows slack time for each task (how much buffer before it affects the deadline)
-- Critical tasks highlighted in red — delay these and your project slips
+- Critical tasks highlighted in red - delay these and your project slips
 
 ### 🔮 What-If Simulation
 - Preview the impact of changes before committing
