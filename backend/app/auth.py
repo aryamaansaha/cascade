@@ -4,25 +4,57 @@ Firebase authentication middleware for FastAPI.
 Verifies Firebase ID tokens and extracts user information.
 """
 
+import os
+from pathlib import Path
 import firebase_admin
 from firebase_admin import auth, credentials
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from functools import lru_cache
 
 from app.logging_config import get_logger
 
 logger = get_logger(__name__)
 
 # Initialize Firebase Admin SDK
-# For development: initialize without credentials (works for token verification)
-# For production: use service account JSON
-try:
-    firebase_admin.get_app()
-except ValueError:
-    # No app exists yet, initialize
+# Look for service account key in multiple locations
+def _init_firebase():
+    try:
+        firebase_admin.get_app()
+        return  # Already initialized
+    except ValueError:
+        pass  # Need to initialize
+    
+    # Try to find service account key
+    # __file__ = backend/app/auth.py → .parent.parent = backend/
+    backend_dir = Path(__file__).parent.parent
+    
+    possible_paths = [
+        backend_dir / "serviceAccountKey.json",
+        backend_dir / "firebase-service-account.json",
+    ]
+    
+    # Also check for Firebase's default naming pattern: *-firebase-adminsdk-*.json
+    possible_paths.extend(backend_dir.glob("*-firebase-adminsdk-*.json"))
+    
+    # Also check environment variable
+    env_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")
+    if env_path:
+        possible_paths.append(Path(env_path))
+    
+    for key_path in possible_paths:
+        if key_path.exists() and key_path.is_file():
+            cred = credentials.Certificate(str(key_path))
+            firebase_admin.initialize_app(cred)
+            logger.info(f"Firebase Admin SDK initialized with: {key_path.name}")
+            return
+    
+    # Fallback: initialize without credentials (may not work for token verification)
+    logger.warning("No Firebase service account key found! Token verification may fail.")
+    logger.warning("Download from: Firebase Console > Project Settings > Service Accounts")
     firebase_admin.initialize_app()
-    logger.info("Firebase Admin SDK initialized")
+    logger.info("Firebase Admin SDK initialized without credentials")
+
+_init_firebase()
 
 security = HTTPBearer()
 
