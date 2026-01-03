@@ -6,11 +6,19 @@
   min-height: 100vh;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
   padding: 2rem;
   position: relative;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Center content on larger screens */
+@media (min-height: 700px) {
+  .login-screen {
+    justify-content: center;
+  }
 }
 
 /* Subtle background pattern */
@@ -174,7 +182,71 @@
   line-height: 1.4;
 }
 
-/* Responsive */
+/* Mobile - compact layout */
+@media (max-width: 480px) {
+  .login-screen {
+    padding: 1rem;
+  }
+  
+  .login-container {
+    padding: 1.5rem;
+    border-radius: 12px;
+  }
+  
+  .login-logo {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .login-header h1 {
+    font-size: 1.75rem;
+  }
+  
+  .login-tagline {
+    font-size: 1rem;
+  }
+  
+  .login-description {
+    font-size: 0.813rem;
+  }
+  
+  .login-header {
+    margin-bottom: 1.5rem;
+  }
+  
+  .login-form {
+    margin-bottom: 1.5rem;
+  }
+  
+  .login-features {
+    gap: 0.75rem;
+    padding-top: 1rem;
+  }
+  
+  .feature {
+    padding: 1rem;
+    flex-direction: row;
+    text-align: left;
+    gap: 0.75rem;
+  }
+  
+  .feature-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0;
+    flex-shrink: 0;
+  }
+  
+  .feature h3 {
+    font-size: 0.875rem;
+    margin-bottom: 0.125rem;
+  }
+  
+  .feature p {
+    font-size: 0.75rem;
+  }
+}
+
+/* Tablet and up */
 @media (min-width: 768px) {
   .login-container {
     padding: 3rem 3rem 2.5rem 3rem;
