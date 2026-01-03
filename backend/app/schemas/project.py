@@ -23,6 +23,7 @@ class ProjectRead(BaseModel):
     name: str
     description: str | None
     deadline: date | None
+    owner_id: str
     created_at: datetime
     updated_at: datetime
     

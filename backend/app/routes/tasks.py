@@ -4,7 +4,7 @@ Task routes for the Cascade API.
 
 import uuid
 from datetime import date, datetime
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
@@ -14,15 +14,31 @@ from app.schemas import TaskCreate, TaskUpdate, TaskRead
 from app.worker import enqueue_recalc
 from app.exceptions import NotFoundError
 from app.logging_config import get_logger
+from app.auth import get_current_user, AuthenticatedUser
 
 logger = get_logger(__name__)
 
 router = APIRouter()
 
 
+async def check_task_ownership(
+    task: Task,
+    user: AuthenticatedUser,
+    session: AsyncSession
+) -> None:
+    """Check if user owns the task's project, raise 403 if not."""
+    project = await session.get(Project, task.project_id)
+    if not project or project.owner_id != user.uid:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have access to this task"
+        )
+
+
 @router.post("/", response_model=TaskRead, status_code=status.HTTP_201_CREATED)
 async def create_task(
     task_in: TaskCreate,
+    user: AuthenticatedUser = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ) -> Task:
     """
@@ -30,10 +46,16 @@ async def create_task(
     
     If start_date is not provided, defaults to today.
     """
-    # Verify project exists
+    # Verify project exists and user owns it
     project = await session.get(Project, task_in.project_id)
     if not project:
         raise NotFoundError("Project", str(task_in.project_id))
+    
+    if project.owner_id != user.uid:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have access to this project"
+        )
     
     task_data = task_in.model_dump()
     if task_data["start_date"] is None:
@@ -52,16 +74,28 @@ async def create_task(
 @router.get("/", response_model=list[TaskRead])
 async def list_tasks(
     project_id: uuid.UUID | None = None,
+    user: AuthenticatedUser = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ) -> list[Task]:
     """
     List tasks.
     
-    Optionally filter by project_id.
+    Optionally filter by project_id. User can only see tasks from their own projects.
     """
-    query = select(Task)
     if project_id:
-        query = query.where(Task.project_id == project_id)
+        # Check project ownership
+        project = await session.get(Project, project_id)
+        if not project:
+            raise NotFoundError("Project", str(project_id))
+        if project.owner_id != user.uid:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You don't have access to this project"
+            )
+        query = select(Task).where(Task.project_id == project_id)
+    else:
+        # Get all tasks from user's projects
+        query = select(Task).join(Project).where(Project.owner_id == user.uid)
     
     result = await session.execute(query)
     tasks = list(result.scalars().all())
@@ -74,12 +108,15 @@ async def list_tasks(
 @router.get("/{task_id}", response_model=TaskRead)
 async def get_task(
     task_id: uuid.UUID,
+    user: AuthenticatedUser = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ) -> Task:
     """Get a task by ID."""
     task = await session.get(Task, task_id)
     if not task:
         raise NotFoundError("Task", str(task_id))
+    
+    await check_task_ownership(task, user, session)
     return task
 
 
@@ -87,6 +124,7 @@ async def get_task(
 async def update_task(
     task_id: uuid.UUID,
     task_in: TaskUpdate,
+    user: AuthenticatedUser = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ) -> Task:
     """
@@ -98,6 +136,8 @@ async def update_task(
     task = await session.get(Task, task_id)
     if not task:
         raise NotFoundError("Task", str(task_id))
+    
+    await check_task_ownership(task, user, session)
     
     update_data = task_in.model_dump(exclude_unset=True)
     
@@ -125,6 +165,7 @@ async def update_task(
 @router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_task(
     task_id: uuid.UUID,
+    user: AuthenticatedUser = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ) -> None:
     """
@@ -136,6 +177,8 @@ async def delete_task(
     task = await session.get(Task, task_id)
     if not task:
         raise NotFoundError("Task", str(task_id))
+    
+    await check_task_ownership(task, user, session)
     
     logger.info(f"Deleting task {task_id}: '{task.title}'")
     

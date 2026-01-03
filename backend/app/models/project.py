@@ -16,6 +16,7 @@ class Project(SQLModel, table=True):
     name: str = Field(index=True)
     description: str | None = Field(default=None)
     deadline: date | None = Field(default=None)  # Optional project deadline
+    owner_id: str = Field(index=True)  # Firebase user ID
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     

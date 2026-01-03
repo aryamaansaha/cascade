@@ -3,12 +3,12 @@ Dependency routes for the Cascade API.
 """
 
 import uuid
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from app.database import get_session
-from app.models import Task, Dependency
+from app.models import Task, Dependency, Project
 from app.schemas import DependencyCreate, DependencyRead
 from app.services.graph import detect_cycle
 from app.worker import enqueue_recalc
@@ -20,15 +20,35 @@ from app.exceptions import (
     CrossProjectDependencyError,
 )
 from app.logging_config import get_logger
+from app.auth import get_current_user, AuthenticatedUser
 
 logger = get_logger(__name__)
 
 router = APIRouter()
 
 
+async def check_dependency_ownership(
+    dependency: Dependency,
+    user: AuthenticatedUser,
+    session: AsyncSession
+) -> None:
+    """Check if user owns the dependency's project, raise 403 if not."""
+    predecessor = await session.get(Task, dependency.predecessor_id)
+    if not predecessor:
+        raise NotFoundError("Task", str(dependency.predecessor_id))
+    
+    project = await session.get(Project, predecessor.project_id)
+    if not project or project.owner_id != user.uid:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have access to this dependency"
+        )
+
+
 @router.post("/", response_model=DependencyRead, status_code=status.HTTP_201_CREATED)
 async def create_dependency(
     dep_in: DependencyCreate,
+    user: AuthenticatedUser = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ) -> Dependency:
     """
@@ -48,6 +68,14 @@ async def create_dependency(
     
     if not successor:
         raise NotFoundError("Successor task", str(dep_in.successor_id))
+    
+    # Check ownership
+    project = await session.get(Project, predecessor.project_id)
+    if not project or project.owner_id != user.uid:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have access to this project"
+        )
     
     # Ensure tasks are in the same project
     if predecessor.project_id != successor.project_id:
@@ -124,6 +152,7 @@ async def create_dependency(
 async def list_dependencies(
     project_id: uuid.UUID | None = None,
     task_id: uuid.UUID | None = None,
+    user: AuthenticatedUser = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ) -> list[Dependency]:
     """
@@ -132,8 +161,20 @@ async def list_dependencies(
     Optionally filter by:
     - project_id: Get all dependencies within a project
     - task_id: Get dependencies where task is predecessor OR successor
+    
+    User can only see dependencies from their own projects.
     """
     if project_id:
+        # Check ownership
+        project = await session.get(Project, project_id)
+        if not project:
+            raise NotFoundError("Project", str(project_id))
+        if project.owner_id != user.uid:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You don't have access to this project"
+            )
+        
         # Get all dependencies for tasks in this project
         task_ids_query = select(Task.id).where(Task.project_id == project_id)
         task_ids_result = await session.execute(task_ids_query)
@@ -143,13 +184,31 @@ async def list_dependencies(
             Dependency.predecessor_id.in_(task_ids)
         )
     elif task_id:
+        # Check task ownership
+        task = await session.get(Task, task_id)
+        if not task:
+            raise NotFoundError("Task", str(task_id))
+        project = await session.get(Project, task.project_id)
+        if not project or project.owner_id != user.uid:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You don't have access to this task"
+            )
+        
         # Get dependencies involving this specific task
         query = select(Dependency).where(
             (Dependency.predecessor_id == task_id) | 
             (Dependency.successor_id == task_id)
         )
     else:
-        query = select(Dependency)
+        # Get all dependencies from user's projects
+        task_ids_query = select(Task.id).join(Project).where(Project.owner_id == user.uid)
+        task_ids_result = await session.execute(task_ids_query)
+        task_ids = [row[0] for row in task_ids_result.all()]
+        
+        query = select(Dependency).where(
+            Dependency.predecessor_id.in_(task_ids)
+        )
     
     result = await session.execute(query)
     dependencies = list(result.scalars().all())
@@ -166,6 +225,7 @@ async def list_dependencies(
 async def delete_dependency(
     predecessor_id: uuid.UUID,
     successor_id: uuid.UUID,
+    user: AuthenticatedUser = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ) -> None:
     """
@@ -177,6 +237,8 @@ async def delete_dependency(
     dependency = await session.get(Dependency, (predecessor_id, successor_id))
     if not dependency:
         raise NotFoundError("Dependency", f"{predecessor_id}/{successor_id}")
+    
+    await check_dependency_ownership(dependency, user, session)
     
     logger.info(f"Deleting dependency: {predecessor_id} -> {successor_id}")
     
