@@ -16,7 +16,7 @@ import networkx as nx
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
-from app.models import Task, Dependency, Project
+from app.models import Task, Dependency
 from app.logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -57,11 +57,6 @@ async def analyze_critical_path(
     
     Returns analysis including slack times and critical path identification.
     """
-    # Fetch project to get deadline
-    project = await session.get(Project, project_id)
-    if not project:
-        return None
-    
     # Fetch all tasks for the project
     tasks_result = await session.execute(
         select(Task).where(Task.project_id == project_id)
@@ -95,8 +90,8 @@ async def analyze_critical_path(
     for dep in dependencies:
         graph.add_edge(dep.predecessor_id, dep.successor_id)
     
-    # Perform CPM analysis with project deadline
-    return _calculate_cpm(graph, project_id, project.deadline)
+    # Perform CPM analysis
+    return _calculate_cpm(graph, project_id)
 
 
 def _calculate_cpm(graph: nx.DiGraph, project_id: uuid.UUID) -> ProjectAnalysis:

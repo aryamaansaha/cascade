@@ -283,44 +283,44 @@ function FlowCanvasInner({
   }, [setEdges, onSelectTask]);
 
   return (
-    <ReactFlow
-      nodes={nodes}
-      edges={edges}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
-      onConnect={onConnect}
-      onNodeClick={onNodeClick}
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        onNodeClick={onNodeClick}
       onEdgeClick={onEdgeClick}
-      onNodeDragStop={onNodeDragStop}
+        onNodeDragStop={onNodeDragStop}
       onPaneClick={handlePaneClick}
-      nodeTypes={nodeTypes}
-      connectionMode={ConnectionMode.Loose}
-      fitView
-      fitViewOptions={{ padding: 0.2 }}
-      defaultEdgeOptions={{
-        type: 'smoothstep',
-        style: { strokeWidth: 2 },
-      }}
+        nodeTypes={nodeTypes}
+        connectionMode={ConnectionMode.Loose}
+        fitView
+        fitViewOptions={{ padding: 0.2 }}
+        defaultEdgeOptions={{
+          type: 'smoothstep',
+          style: { strokeWidth: 2 },
+        }}
       deleteKeyCode={null}
-    >
-      <Background
-        variant={BackgroundVariant.Dots}
-        gap={20}
-        size={1}
-        color="var(--grid-color)"
-      />
-      <Controls className="flow-controls" />
-      <MiniMap
-        className="flow-minimap"
-        nodeColor={(node) => {
-          if (node.selected) return 'var(--accent-primary)';
+      >
+        <Background
+          variant={BackgroundVariant.Dots}
+          gap={20}
+          size={1}
+          color="var(--grid-color)"
+        />
+        <Controls className="flow-controls" />
+        <MiniMap
+          className="flow-minimap"
+          nodeColor={(node) => {
+            if (node.selected) return 'var(--accent-primary)';
           const data = node.data as TaskNodeData;
           if (data?.isCritical) return 'var(--danger)';
-          return 'var(--node-bg)';
-        }}
-        maskColor="rgba(0, 0, 0, 0.2)"
-      />
-    </ReactFlow>
+            return 'var(--node-bg)';
+          }}
+          maskColor="rgba(0, 0, 0, 0.2)"
+        />
+      </ReactFlow>
   );
 }
 
