@@ -7,11 +7,16 @@ from app.config import get_settings
 
 settings = get_settings()
 
-# Create async engine
+# Create async engine with proper pool configuration
 engine = create_async_engine(
     settings.database_url,
     echo=settings.debug,
     future=True,
+    pool_size=10,
+    max_overflow=20,
+    pool_timeout=30,
+    pool_recycle=1800,  # Recycle connections after 30 min
+    pool_pre_ping=True,  # Verify connection health before use
 )
 
 # Session factory
