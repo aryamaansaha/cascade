@@ -81,7 +81,7 @@
 
 /* Selection box */
 .react-flow__selection {
-  background: rgba(99, 102, 241, 0.1) !important;
+  background: var(--accent-glow) !important;
   border: 1px dashed var(--accent-primary) !important;
 }
 
