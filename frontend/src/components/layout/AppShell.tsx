@@ -31,6 +31,10 @@ interface AppShellProps {
   onUpdateTask: (id: string, updates: Partial<Task>) => void;
   onDeleteTask: (id: string) => Promise<void>;
   onCreateTask: () => void;
+  // Link mode (mobile-friendly dependency creation)
+  linkModeSourceId: string | null;
+  onStartLinkMode: (taskId: string) => void;
+  onCancelLinkMode: () => void;
 }
 
 export function AppShell({
@@ -52,6 +56,9 @@ export function AppShell({
   onUpdateTask,
   onDeleteTask,
   onCreateTask,
+  linkModeSourceId,
+  onStartLinkMode,
+  onCancelLinkMode,
 }: AppShellProps) {
   // Sidebar collapse state (persisted to localStorage)
   const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState(() => {
@@ -204,9 +211,16 @@ export function AppShell({
                   </button>
                 )}
               </div>
-              <span className="toolbar-hint">
-                💡 Drag handles to connect • Ctrl+Z undo
-              </span>
+              {linkModeSourceId ? (
+                <LinkModeBanner 
+                  sourceTask={tasks.find(t => t.id === linkModeSourceId)}
+                  onCancel={onCancelLinkMode}
+                />
+              ) : (
+                <span className="toolbar-hint">
+                  💡 Drag handles to connect • Ctrl+Z undo
+                </span>
+              )}
             </div>
             
             {/* Deadline Status Banner */}
@@ -251,6 +265,8 @@ export function AppShell({
                   projectId={selectedProjectId!}
                   onUpdate={onUpdateTask}
                   onDeleteRequest={handleDeleteTaskRequest}
+                  onStartLinkMode={onStartLinkMode}
+                  isInLinkMode={linkModeSourceId !== null}
                 />
               ) : (
                 <div className="empty-state">
@@ -304,9 +320,11 @@ interface TaskInspectorProps {
   projectId: string;
   onUpdate: (id: string, updates: Partial<Task>) => void;
   onDeleteRequest: () => void;
+  onStartLinkMode: (taskId: string) => void;
+  isInLinkMode: boolean;
 }
 
-function TaskInspector({ task, tasks, dependencies, criticalPath, projectId, onUpdate, onDeleteRequest }: TaskInspectorProps) {
+function TaskInspector({ task, tasks, dependencies, criticalPath, projectId, onUpdate, onDeleteRequest, onStartLinkMode, isInLinkMode }: TaskInspectorProps) {
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || '');
   const [duration, setDuration] = useState(task.duration_days);
@@ -431,6 +449,14 @@ function TaskInspector({ task, tasks, dependencies, criticalPath, projectId, onU
       </div>
 
       <div className="action-buttons">
+        <button 
+          className="btn-link-mode" 
+          onClick={() => onStartLinkMode(task.id)}
+          disabled={isInLinkMode || tasks.length < 2}
+          title={tasks.length < 2 ? "Create another task first" : "Click another task to create a dependency"}
+        >
+          🔗 Link to...
+        </button>
         <button className="btn-whatif" onClick={() => setIsSimulationOpen(true)}>
           🔮 What-If
         </button>
@@ -448,6 +474,28 @@ function TaskInspector({ task, tasks, dependencies, criticalPath, projectId, onU
         task={task}
         projectId={projectId}
       />
+    </div>
+  );
+}
+
+// =============================================================================
+// Link Mode Banner Component
+// =============================================================================
+
+interface LinkModeBannerProps {
+  sourceTask?: Task;
+  onCancel: () => void;
+}
+
+function LinkModeBanner({ sourceTask, onCancel }: LinkModeBannerProps) {
+  return (
+    <div className="link-mode-banner">
+      <span className="link-mode-text">
+        🔗 Click a task to link from <strong>"{sourceTask?.title || 'task'}"</strong>
+      </span>
+      <button className="link-mode-cancel" onClick={onCancel}>
+        Cancel
+      </button>
     </div>
   );
 }

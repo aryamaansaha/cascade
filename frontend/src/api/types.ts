@@ -168,5 +168,8 @@ export interface TaskNodeData {
   isCritical: boolean;
   isSearchMatch: boolean;
   isDimmed: boolean;
+  // Link mode (mobile-friendly dependency creation)
+  isLinkSource?: boolean;
+  isLinkTarget?: boolean;
   [key: string]: unknown;
 }

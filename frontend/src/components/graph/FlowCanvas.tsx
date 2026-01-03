@@ -9,7 +9,7 @@
  * - Persisting node positions
  */
 
-import { useCallback, useMemo, useEffect, useRef } from 'react';
+import { useCallback, useMemo, useEffect, useRef, useState } from 'react';
 import {
   ReactFlow,
   Background,
@@ -55,6 +55,10 @@ interface FlowCanvasProps {
   onCreateDependency: (predecessorId: string, successorId: string) => void;
   onDeleteDependency: (predecessorId: string, successorId: string) => void;
   onUpdateTaskPosition: (taskId: string, x: number, y: number) => void;
+  // Link mode - for mobile-friendly dependency creation
+  linkModeSourceId: string | null;
+  onStartLinkMode: (taskId: string) => void;
+  onCancelLinkMode: () => void;
 }
 
 /**
@@ -88,9 +92,11 @@ function tasksToNodes(
   tasks: Task[],
   selectedTaskId: string | null,
   criticalPathTaskIds: Set<string>,
-  searchTerm: string
+  searchTerm: string,
+  linkModeSourceId: string | null = null
 ): Node<TaskNodeData>[] {
   const hasSearch = searchTerm.trim().length > 0;
+  const isInLinkMode = linkModeSourceId !== null;
   
   return tasks.map((task, index) => {
     // Use stored position if available, otherwise auto-layout
@@ -99,6 +105,8 @@ function tasksToNodes(
       : getAutoLayoutPosition(index);
     
     const isSearchMatch = taskMatchesSearch(task, searchTerm);
+    const isLinkSource = task.id === linkModeSourceId;
+    const isLinkTarget = isInLinkMode && !isLinkSource;
     
     return {
       id: task.id,
@@ -110,6 +118,8 @@ function tasksToNodes(
         isCritical: criticalPathTaskIds.has(task.id),
         isSearchMatch,
         isDimmed: hasSearch && !isSearchMatch,
+        isLinkSource,
+        isLinkTarget,
       } as TaskNodeData,
       selected: task.id === selectedTaskId,
     };
@@ -157,6 +167,9 @@ function FlowCanvasInner({
   onCreateDependency,
   onDeleteDependency,
   onUpdateTaskPosition,
+  linkModeSourceId,
+  onStartLinkMode,
+  onCancelLinkMode,
 }: FlowCanvasProps) {
   // Track task IDs to detect additions/removals
   const prevTaskIdsRef = useRef<Set<string>>(new Set());
@@ -165,8 +178,8 @@ function FlowCanvasInner({
   
   // Convert data to ReactFlow format
   const initialNodes = useMemo(
-    () => tasksToNodes(tasks, selectedTaskId, criticalPathTaskIds, searchTerm),
-    [tasks, selectedTaskId, criticalPathTaskIds, searchTerm]
+    () => tasksToNodes(tasks, selectedTaskId, criticalPathTaskIds, searchTerm, linkModeSourceId),
+    [tasks, selectedTaskId, criticalPathTaskIds, searchTerm, linkModeSourceId]
   );
   
   const initialEdges = useMemo(
@@ -183,6 +196,7 @@ function FlowCanvasInner({
     const currentTaskIds = new Set(tasks.map(t => t.id));
     const prevTaskIds = prevTaskIdsRef.current;
     const hasSearch = searchTerm.trim().length > 0;
+    const isInLinkMode = linkModeSourceId !== null;
     
     // Check if tasks were added or removed
     const tasksChanged = 
@@ -191,7 +205,7 @@ function FlowCanvasInner({
     
     if (tasksChanged) {
       // Tasks were added/removed - do a full reset
-      setNodes(tasksToNodes(tasks, selectedTaskId, criticalPathTaskIds, searchTerm) as Node[]);
+      setNodes(tasksToNodes(tasks, selectedTaskId, criticalPathTaskIds, searchTerm, linkModeSourceId) as Node[]);
       // Fit view after a short delay to ensure nodes are rendered
       setTimeout(() => fitView({ padding: 0.2 }), 50);
     } else {
@@ -202,6 +216,8 @@ function FlowCanvasInner({
           if (!task) return node;
           
           const isSearchMatch = taskMatchesSearch(task, searchTerm);
+          const isLinkSource = task.id === linkModeSourceId;
+          const isLinkTarget = isInLinkMode && !isLinkSource;
           
           return {
             ...node,
@@ -211,6 +227,8 @@ function FlowCanvasInner({
               isCritical: criticalPathTaskIds.has(task.id),
               isSearchMatch,
               isDimmed: hasSearch && !isSearchMatch,
+              isLinkSource,
+              isLinkTarget,
             } as TaskNodeData,
             selected: task.id === selectedTaskId,
           };
@@ -219,7 +237,7 @@ function FlowCanvasInner({
     }
     
     prevTaskIdsRef.current = currentTaskIds;
-  }, [tasks, selectedTaskId, criticalPathTaskIds, searchTerm, setNodes, fitView]);
+  }, [tasks, selectedTaskId, criticalPathTaskIds, searchTerm, linkModeSourceId, setNodes, fitView]);
 
   // Update edges when dependencies change
   useEffect(() => {
@@ -234,12 +252,21 @@ function FlowCanvasInner({
     [onUpdateTaskPosition]
   );
 
-  // Handle node selection
+  // Handle node selection (or link completion in link mode)
   const onNodeClick = useCallback(
     (_event: React.MouseEvent, node: Node) => {
-      onSelectTask(node.id);
+      if (linkModeSourceId) {
+        // In link mode - create dependency and exit link mode
+        if (node.id !== linkModeSourceId) {
+          onCreateDependency(linkModeSourceId, node.id);
+        }
+        onCancelLinkMode();
+      } else {
+        // Normal mode - just select
+        onSelectTask(node.id);
+      }
     },
-    [onSelectTask]
+    [onSelectTask, linkModeSourceId, onCreateDependency, onCancelLinkMode]
   );
 
   // Handle new edge connections (create dependency)
@@ -274,9 +301,16 @@ function FlowCanvasInner({
     [setEdges, onSelectTask]
   );
 
-  // Handle keyboard events for edge deletion
+  // Handle keyboard events for edge deletion and link mode cancellation
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Escape key cancels link mode
+      if (event.key === 'Escape' && linkModeSourceId) {
+        onCancelLinkMode();
+        return;
+      }
+      
+      // Delete/Backspace deletes selected edge
       if ((event.key === 'Delete' || event.key === 'Backspace') && selectedEdgeRef.current) {
         const edgeId = selectedEdgeRef.current;
         const [predecessorId, successorId] = edgeId.split('::');
@@ -289,10 +323,15 @@ function FlowCanvasInner({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onDeleteDependency]);
+  }, [onDeleteDependency, linkModeSourceId, onCancelLinkMode]);
 
-  // Clear edge selection when clicking on pane
+  // Clear edge selection when clicking on pane (and cancel link mode)
   const handlePaneClick = useCallback(() => {
+    // Cancel link mode if active
+    if (linkModeSourceId) {
+      onCancelLinkMode();
+    }
+    
     selectedEdgeRef.current = null;
     setEdges(currentEdges =>
       currentEdges.map(e => ({
@@ -306,7 +345,7 @@ function FlowCanvasInner({
       }))
     );
     onSelectTask(null);
-  }, [setEdges, onSelectTask]);
+  }, [setEdges, onSelectTask, linkModeSourceId, onCancelLinkMode]);
 
   return (
       <ReactFlow

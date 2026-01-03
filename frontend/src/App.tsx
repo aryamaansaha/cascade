@@ -65,6 +65,7 @@ function CascadeApp() {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [linkModeSourceId, setLinkModeSourceId] = useState<string | null>(null);
 
   // Clear cache and reset state when user changes
   useEffect(() => {
@@ -163,6 +164,15 @@ function CascadeApp() {
 
   const handleSelectTask = useCallback((taskId: string | null) => {
     setSelectedTaskId(taskId);
+  }, []);
+
+  // Link mode handlers (mobile-friendly dependency creation)
+  const handleStartLinkMode = useCallback((taskId: string) => {
+    setLinkModeSourceId(taskId);
+  }, []);
+
+  const handleCancelLinkMode = useCallback(() => {
+    setLinkModeSourceId(null);
   }, []);
 
   const handleCreateTask = useCallback(async (data: TaskCreate) => {
@@ -361,6 +371,9 @@ function CascadeApp() {
         onUpdateTask={handleUpdateTask}
         onDeleteTask={handleDeleteTask}
         onCreateTask={() => setIsTaskModalOpen(true)}
+        linkModeSourceId={linkModeSourceId}
+        onStartLinkMode={handleStartLinkMode}
+        onCancelLinkMode={handleCancelLinkMode}
       >
         {selectedProjectId && projects.some(p => p.id === selectedProjectId) && (
           <FlowCanvas
@@ -373,6 +386,9 @@ function CascadeApp() {
             onCreateDependency={handleCreateDependency}
             onDeleteDependency={handleDeleteDependency}
             onUpdateTaskPosition={handleUpdateTaskPosition}
+            linkModeSourceId={linkModeSourceId}
+            onStartLinkMode={handleStartLinkMode}
+            onCancelLinkMode={handleCancelLinkMode}
           />
         )}
       </AppShell>
