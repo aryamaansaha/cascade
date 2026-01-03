@@ -680,6 +680,38 @@
 }
 
 /* =============================================================================
+   Mobile Header (hidden on desktop)
+   ============================================================================= */
+
+.mobile-header {
+  display: none;
+}
+
+.mobile-backdrop {
+  display: none;
+}
+
+.mobile-close-btn {
+  display: none;
+}
+
+.mobile-sheet-handle {
+  display: none;
+}
+
+.mobile-inspector-toggle {
+  display: none;
+}
+
+.mobile-open-menu-btn {
+  display: none;
+}
+
+.mobile-close-inspector {
+  display: none;
+}
+
+/* =============================================================================
    Responsive Layout
    ============================================================================= */
 
@@ -694,10 +726,356 @@
   }
 }
 
-/* Hide hint text only on very small screens to prevent overflow */
+/* Hide hint text on smaller screens */
 @media (max-width: 1000px) {
   .toolbar-hint {
     display: none;
+  }
+}
+
+/* =============================================================================
+   Mobile Layout (< 768px)
+   ============================================================================= */
+
+@media (max-width: 768px) {
+  /* Reset grid to single column */
+  .app-shell {
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: unset;
+  }
+  
+  .app-shell.left-collapsed,
+  .app-shell.right-collapsed,
+  .app-shell.left-collapsed.right-collapsed {
+    grid-template-columns: unset;
+  }
+
+  /* Mobile Header */
+  .mobile-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .mobile-menu-btn,
+  .mobile-add-btn {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .mobile-menu-btn:hover,
+  .mobile-add-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent-primary);
+  }
+
+  .mobile-add-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .mobile-header-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 1rem;
+  }
+
+  .mobile-logo {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* Mobile Backdrop */
+  .mobile-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 90;
+    animation: fadeIn 0.2s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* Left Sidebar - Slide in drawer */
+  .sidebar-left {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 85vw;
+    max-width: 320px;
+    z-index: 100;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    border-right: 1px solid var(--border-color);
+  }
+
+  .sidebar-left.mobile-open {
+    transform: translateX(0);
+  }
+
+  .sidebar-left.collapsed {
+    min-width: unset;
+    max-width: unset;
+  }
+
+  /* Mobile close button for sidebar */
+  .mobile-close-btn {
+    display: flex;
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 36px;
+    height: 36px;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    z-index: 10;
+  }
+
+  .mobile-close-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+
+  /* Hide sidebar toggle on mobile */
+  .sidebar-toggle {
+    display: none;
+  }
+
+  /* Right Sidebar - Bottom sheet */
+  .sidebar-right {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: auto;
+    width: 100%;
+    max-height: 80vh;
+    z-index: 100;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+    border-left: none;
+    border-top: 1px solid var(--border-color);
+    border-radius: 16px 16px 0 0;
+    overflow: hidden;
+  }
+
+  .sidebar-right.mobile-open {
+    transform: translateY(0);
+  }
+
+  .sidebar-right.collapsed {
+    min-width: unset;
+    max-width: unset;
+  }
+
+  /* Mobile sheet drag handle */
+  .mobile-sheet-handle {
+    display: flex;
+    justify-content: center;
+    padding: 0.75rem;
+    cursor: pointer;
+  }
+
+  .mobile-sheet-handle-bar {
+    width: 40px;
+    height: 4px;
+    background: var(--text-tertiary);
+    border-radius: 2px;
+  }
+
+  /* Adjust sidebar header for bottom sheet */
+  .sidebar-right .sidebar-header {
+    justify-content: space-between;
+  }
+
+  .mobile-close-inspector {
+    display: flex;
+    position: static;
+    width: 32px;
+    height: 32px;
+    font-size: 1.25rem;
+  }
+
+  /* Make sidebar content scrollable */
+  .sidebar-right .sidebar-content {
+    max-height: calc(80vh - 120px);
+    overflow-y: auto;
+    padding-bottom: 2rem;
+  }
+
+  /* Canvas container takes full height minus header */
+  .canvas-container {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+  }
+
+  /* Hide desktop toolbar elements on mobile */
+  .canvas-toolbar {
+    padding: 0.5rem;
+    gap: 0.5rem;
+    min-height: 44px;
+  }
+
+  .btn-new-task {
+    display: none;
+  }
+
+  .search-container {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .search-input {
+    max-width: none;
+    width: 100%;
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+
+  .toolbar-hint {
+    display: none;
+  }
+
+  /* Mobile inspector toggle button */
+  .mobile-inspector-toggle {
+    display: flex;
+    position: absolute;
+    bottom: 1rem;
+    left: 1rem;
+    right: 1rem;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--accent-primary);
+    border-radius: 12px;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    z-index: 10;
+    animation: slideUp 0.3s ease;
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .mobile-inspector-toggle:active {
+    transform: scale(0.98);
+  }
+
+  .mobile-inspector-toggle-task {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 1rem;
+  }
+
+  .mobile-inspector-toggle-hint {
+    font-size: 0.75rem;
+    color: var(--accent-primary);
+  }
+
+  /* Mobile open menu button in empty state */
+  .mobile-open-menu-btn {
+    display: inline-flex;
+    margin-top: 1rem;
+    padding: 0.75rem 1.5rem;
+    background: var(--accent-primary);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .mobile-open-menu-btn:hover {
+    background: var(--accent-secondary);
+  }
+
+  /* Deadline banner adjustments */
+  .deadline-banner {
+    margin: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.813rem;
+  }
+
+  .deadline-details {
+    font-size: 0.688rem;
+  }
+
+  /* Link mode banner - more compact */
+  .link-mode-banner {
+    flex: 1;
+    margin-left: 0;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .link-mode-text {
+    font-size: 0.75rem;
+    white-space: normal;
+  }
+
+  /* Form adjustments for mobile */
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .form-group input,
+  .form-group textarea {
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+
+  /* Empty canvas adjustments */
+  .empty-canvas-content {
+    padding: 2rem;
+  }
+
+  .empty-icon {
+    font-size: 2.5rem;
+  }
+
+  .empty-canvas-content h2 {
+    font-size: 1.125rem;
   }
 }
 

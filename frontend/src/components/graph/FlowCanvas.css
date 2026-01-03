@@ -115,3 +115,30 @@
   }
 }
 
+/* =============================================================================
+   Mobile Adjustments
+   ============================================================================= */
+
+@media (max-width: 768px) {
+  /* Hide minimap on mobile to save space */
+  .flow-minimap {
+    display: none !important;
+  }
+  
+  /* Make controls bigger for touch */
+  .flow-controls {
+    bottom: 80px !important; /* Above the mobile inspector toggle */
+    left: 10px !important;
+  }
+  
+  .flow-controls button {
+    width: 40px !important;
+    height: 40px !important;
+  }
+  
+  .flow-controls button svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+}
+

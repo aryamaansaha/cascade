@@ -60,7 +60,7 @@ export function AppShell({
   onStartLinkMode,
   onCancelLinkMode,
 }: AppShellProps) {
-  // Sidebar collapse state (persisted to localStorage)
+  // Sidebar collapse state (persisted to localStorage) - for desktop
   const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState(() => {
     const saved = localStorage.getItem('leftSidebarCollapsed');
     return saved === 'true';
@@ -69,6 +69,10 @@ export function AppShell({
     const saved = localStorage.getItem('rightSidebarCollapsed');
     return saved === 'true';
   });
+
+  // Mobile drawer state
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileInspectorOpen, setMobileInspectorOpen] = useState(false);
 
   // Task delete confirmation state
   const [deleteTaskConfirmOpen, setDeleteTaskConfirmOpen] = useState(false);
@@ -79,7 +83,7 @@ export function AppShell({
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
   const [isDeletingProject, setIsDeletingProject] = useState(false);
 
-  // Persist sidebar state to localStorage
+  // Persist sidebar state to localStorage (desktop only)
   useEffect(() => {
     localStorage.setItem('leftSidebarCollapsed', String(leftSidebarCollapsed));
   }, [leftSidebarCollapsed]);
@@ -87,6 +91,19 @@ export function AppShell({
   useEffect(() => {
     localStorage.setItem('rightSidebarCollapsed', String(rightSidebarCollapsed));
   }, [rightSidebarCollapsed]);
+
+  // Auto-open inspector on mobile when a task is selected
+  useEffect(() => {
+    if (selectedTask) {
+      setMobileInspectorOpen(true);
+    }
+  }, [selectedTask]);
+
+  // Close mobile menu when selecting a project
+  const handleSelectProjectMobile = (id: string) => {
+    onSelectProject(id);
+    setMobileMenuOpen(false);
+  };
 
   const handleDeleteTaskRequest = () => {
     setDeleteTaskConfirmOpen(true);
@@ -123,10 +140,55 @@ export function AppShell({
     }
   };
 
+  // Get selected project name
+  const selectedProject = projects.find(p => p.id === selectedProjectId);
+
   return (
     <div className={`app-shell ${leftSidebarCollapsed ? 'left-collapsed' : ''} ${rightSidebarCollapsed ? 'right-collapsed' : ''}`}>
+      {/* Mobile Header - only visible on mobile */}
+      <header className="mobile-header">
+        <button 
+          className="mobile-menu-btn" 
+          onClick={() => setMobileMenuOpen(true)}
+          title="Open menu"
+        >
+          ☰
+        </button>
+        <div className="mobile-header-title">
+          <img src="/cascade_logo.png" alt="Cascade" className="mobile-logo" />
+          <span>{selectedProject?.name || 'Cascade'}</span>
+        </div>
+        <button 
+          className="mobile-add-btn" 
+          onClick={onCreateTask}
+          disabled={!selectedProjectId}
+          title="Add task"
+        >
+          +
+        </button>
+      </header>
+
+      {/* Mobile Backdrop */}
+      {(mobileMenuOpen || mobileInspectorOpen) && (
+        <div 
+          className="mobile-backdrop" 
+          onClick={() => {
+            setMobileMenuOpen(false);
+            setMobileInspectorOpen(false);
+          }} 
+        />
+      )}
+
       {/* Left Sidebar - Projects */}
-      <aside className={`sidebar sidebar-left ${leftSidebarCollapsed ? 'collapsed' : ''}`}>
+      <aside className={`sidebar sidebar-left ${leftSidebarCollapsed ? 'collapsed' : ''} ${mobileMenuOpen ? 'mobile-open' : ''}`}>
+        {/* Mobile close button */}
+        <button 
+          className="mobile-close-btn"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          ×
+        </button>
+        
         {!leftSidebarCollapsed && (
           <>
             <div className="sidebar-header">
@@ -156,7 +218,7 @@ export function AppShell({
                   <li
                     key={project.id}
                     className={`project-item ${selectedProjectId === project.id ? 'active' : ''}`}
-                    onClick={() => onSelectProject(project.id)}
+                    onClick={() => handleSelectProjectMobile(project.id)}
                   >
                     <span className="project-icon">📁</span>
                     <span className="project-name">{project.name}</span>
@@ -190,7 +252,7 @@ export function AppShell({
         {selectedProjectId ? (
           <>
             <div className="canvas-toolbar">
-              <button className="btn-secondary" onClick={onCreateTask}>
+              <button className="btn-secondary btn-new-task" onClick={onCreateTask}>
                 + New Task
               </button>
               <div className="search-container">
@@ -229,6 +291,17 @@ export function AppShell({
             )}
             
             {children}
+
+            {/* Mobile Inspector Toggle - shows when task is selected */}
+            {selectedTask && !mobileInspectorOpen && (
+              <button 
+                className="mobile-inspector-toggle"
+                onClick={() => setMobileInspectorOpen(true)}
+              >
+                <span className="mobile-inspector-toggle-task">{selectedTask.title}</span>
+                <span className="mobile-inspector-toggle-hint">Tap to edit</span>
+              </button>
+            )}
           </>
         ) : (
           <div className="empty-canvas">
@@ -236,13 +309,19 @@ export function AppShell({
               <span className="empty-icon">📊</span>
               <h2>Select a project</h2>
               <p>Choose a project from the sidebar or create a new one</p>
+              <button 
+                className="mobile-open-menu-btn"
+                onClick={() => setMobileMenuOpen(true)}
+              >
+                Open Projects
+              </button>
             </div>
           </div>
         )}
       </main>
 
-      {/* Right Sidebar - Inspector */}
-      <aside className={`sidebar sidebar-right ${rightSidebarCollapsed ? 'collapsed' : ''}`}>
+      {/* Right Sidebar - Inspector (becomes bottom sheet on mobile) */}
+      <aside className={`sidebar sidebar-right ${rightSidebarCollapsed ? 'collapsed' : ''} ${mobileInspectorOpen ? 'mobile-open' : ''}`}>
         <button 
           className="sidebar-toggle sidebar-toggle-right" 
           onClick={() => setRightSidebarCollapsed(!rightSidebarCollapsed)}
@@ -250,10 +329,22 @@ export function AppShell({
         >
           {rightSidebarCollapsed ? '‹' : '›'}
         </button>
+        
+        {/* Mobile drag handle */}
+        <div className="mobile-sheet-handle" onClick={() => setMobileInspectorOpen(false)}>
+          <div className="mobile-sheet-handle-bar" />
+        </div>
+        
         {!rightSidebarCollapsed && (
           <>
             <div className="sidebar-header">
               <h2>Inspector</h2>
+              <button 
+                className="mobile-close-btn mobile-close-inspector"
+                onClick={() => setMobileInspectorOpen(false)}
+              >
+                ×
+              </button>
             </div>
             <div className="sidebar-content">
               {selectedTask ? (

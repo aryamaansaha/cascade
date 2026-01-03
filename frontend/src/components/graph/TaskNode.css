@@ -327,3 +327,47 @@
   margin-top: -6px;
 }
 
+/* =============================================================================
+   Mobile Adjustments
+   ============================================================================= */
+
+@media (max-width: 768px) {
+  /* Make handles bigger for touch */
+  .task-handle {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  .task-handle-input {
+    left: -12px !important;
+  }
+
+  .task-handle-output {
+    right: -12px !important;
+  }
+
+  /* Hide handle labels on mobile - they clutter */
+  .task-node:hover .task-handle-input::before,
+  .task-node:hover .task-handle-output::before {
+    display: none;
+  }
+
+  /* Make nodes slightly more compact */
+  .task-node {
+    min-width: 160px;
+  }
+
+  .task-node-content {
+    padding: 0.625rem 0.75rem 0.625rem 0.875rem;
+  }
+
+  .task-title {
+    font-size: 0.813rem;
+  }
+
+  .task-duration,
+  .task-dates {
+    font-size: 0.688rem;
+  }
+}
+
