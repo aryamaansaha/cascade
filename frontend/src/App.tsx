@@ -7,7 +7,7 @@
  * - Task editing via the inspector
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { AppShell } from './components/layout/AppShell';
@@ -19,6 +19,7 @@ import {
   useCreateProject,
   useDeleteProject,
   useProjectStatus,
+  useCriticalPath,
   useTasks,
   useCreateTask,
   useUpdateTask,
@@ -65,6 +66,13 @@ function CascadeApp() {
   const { data: tasks = [] } = useTasks(selectedProjectId ?? undefined);
   const { data: dependencies = [] } = useDependencies(selectedProjectId ?? undefined);
   const { data: projectStatus } = useProjectStatus(selectedProjectId ?? undefined);
+  const { data: criticalPath } = useCriticalPath(selectedProjectId ?? undefined);
+  
+  // Memoized set of critical path task IDs for O(1) lookup
+  const criticalPathTaskIds = useMemo(
+    () => new Set(criticalPath?.critical_path_task_ids ?? []),
+    [criticalPath]
+  );
 
   // Mutations
   const createProjectMutation = useCreateProject();
@@ -203,6 +211,7 @@ function CascadeApp() {
         projects={projects}
         selectedProjectId={selectedProjectId}
         projectStatus={projectStatus}
+        criticalPath={criticalPath}
         onSelectProject={handleSelectProject}
         onCreateProject={() => setIsProjectModalOpen(true)}
         onDeleteProject={handleDeleteProject}
@@ -218,6 +227,7 @@ function CascadeApp() {
             tasks={tasks}
             dependencies={dependencies}
             selectedTaskId={selectedTaskId}
+            criticalPathTaskIds={criticalPathTaskIds}
             onSelectTask={handleSelectTask}
             onCreateDependency={handleCreateDependency}
             onDeleteDependency={handleDeleteDependency}

@@ -37,6 +37,25 @@ export interface ProjectStatus {
   days_over: number | null;
 }
 
+export interface TaskCriticalAnalysis {
+  task_id: string;
+  title: string;
+  duration_days: number;
+  earliest_start: string;
+  earliest_finish: string;
+  latest_start: string;
+  latest_finish: string;
+  total_slack: number;
+  is_critical: boolean;
+}
+
+export interface CriticalPathAnalysis {
+  project_id: string;
+  project_end_date: string;
+  critical_path_task_ids: string[];
+  task_analyses: TaskCriticalAnalysis[];
+}
+
 // =============================================================================
 // Task Types
 // =============================================================================
@@ -113,5 +132,6 @@ export interface ApiError {
 export interface TaskNodeData {
   task: Task;
   isSelected: boolean;
+  isCritical: boolean;
   [key: string]: unknown;
 }

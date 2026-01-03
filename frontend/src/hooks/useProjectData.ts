@@ -20,6 +20,7 @@ export const queryKeys = {
   projects: ['projects'] as const,
   project: (id: string) => ['projects', id] as const,
   projectStatus: (id: string) => ['projects', id, 'status'] as const,
+  criticalPath: (id: string) => ['projects', id, 'critical-path'] as const,
   tasks: (projectId?: string) => ['tasks', { projectId }] as const,
   task: (id: string) => ['tasks', id] as const,
   dependencies: (projectId?: string) => ['dependencies', { projectId }] as const,
@@ -85,6 +86,16 @@ export function useProjectStatus(projectId?: string) {
     queryFn: () => projectApi.getStatus(projectId!),
     enabled: !!projectId,
     // Poll every 3 seconds to update as tasks change
+    refetchInterval: 3000,
+  });
+}
+
+export function useCriticalPath(projectId?: string) {
+  return useQuery({
+    queryKey: queryKeys.criticalPath(projectId || ''),
+    queryFn: () => projectApi.getCriticalPath(projectId!),
+    enabled: !!projectId,
+    // Poll every 3 seconds to update critical path
     refetchInterval: 3000,
   });
 }

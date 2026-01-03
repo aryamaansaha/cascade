@@ -19,7 +19,7 @@ type TaskNodeProps = {
 };
 
 export function TaskNode({ data, selected }: TaskNodeProps) {
-  const { task } = data;
+  const { task, isCritical } = data;
   
   // Format date for display (e.g., "Dec 19")
   const formatDate = (dateStr: string) => {
@@ -27,8 +27,14 @@ export function TaskNode({ data, selected }: TaskNodeProps) {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
   
+  const nodeClasses = [
+    'task-node',
+    selected ? 'selected' : '',
+    isCritical ? 'critical' : '',
+  ].filter(Boolean).join(' ');
+  
   return (
-    <div className={`task-node ${selected ? 'selected' : ''}`}>
+    <div className={nodeClasses}>
       {/* Input handle (left) - tasks can have dependencies */}
       <Handle
         type="target"
@@ -39,6 +45,7 @@ export function TaskNode({ data, selected }: TaskNodeProps) {
       <div className="task-node-content">
         <div className="task-node-header">
           <span className="task-title">{task.title}</span>
+          {isCritical && <span className="critical-badge" title="Critical Path">⚡</span>}
         </div>
         
         <div className="task-node-body">

@@ -3,7 +3,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import type { Project, Task, Dependency, ProjectStatus } from '../../api/types';
+import type { Project, Task, Dependency, ProjectStatus, CriticalPathAnalysis } from '../../api/types';
 import { ConfirmModal } from '../ConfirmModal';
 import { getEarliestStartDate, formatDateLong } from '../../utils/scheduling';
 import './AppShell.css';
@@ -13,6 +13,7 @@ interface AppShellProps {
   projects: Project[];
   selectedProjectId: string | null;
   projectStatus?: ProjectStatus;
+  criticalPath?: CriticalPathAnalysis;
   onSelectProject: (id: string) => void;
   onCreateProject: () => void;
   onDeleteProject: (id: string) => Promise<void>;
@@ -31,6 +32,7 @@ export function AppShell({
   projects,
   selectedProjectId,
   projectStatus,
+  criticalPath,
   onSelectProject,
   onCreateProject,
   onDeleteProject,
@@ -168,6 +170,7 @@ export function AppShell({
               task={selectedTask}
               tasks={tasks}
               dependencies={dependencies}
+              criticalPath={criticalPath}
               onUpdate={onUpdateTask}
               onDeleteRequest={handleDeleteTaskRequest}
             />
@@ -217,11 +220,12 @@ interface TaskInspectorProps {
   task: Task;
   tasks: Task[];
   dependencies: Dependency[];
+  criticalPath?: CriticalPathAnalysis;
   onUpdate: (id: string, updates: Partial<Task>) => void;
   onDeleteRequest: () => void;
 }
 
-function TaskInspector({ task, tasks, dependencies, onUpdate, onDeleteRequest }: TaskInspectorProps) {
+function TaskInspector({ task, tasks, dependencies, criticalPath, onUpdate, onDeleteRequest }: TaskInspectorProps) {
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || '');
   const [duration, setDuration] = useState(task.duration_days);
@@ -230,6 +234,11 @@ function TaskInspector({ task, tasks, dependencies, onUpdate, onDeleteRequest }:
   // Calculate earliest valid start date (if task has predecessors)
   const earliestStart = getEarliestStartDate(task.id, tasks, dependencies);
   const hasPredecessors = earliestStart !== null;
+  
+  // Get critical path analysis for this task
+  const taskAnalysis = criticalPath?.task_analyses.find(ta => ta.task_id === task.id);
+  const isCritical = taskAnalysis?.is_critical ?? false;
+  const slackDays = taskAnalysis?.total_slack;
 
   // Update local state when task changes
   useEffect(() => {
@@ -321,6 +330,18 @@ function TaskInspector({ task, tasks, dependencies, onUpdate, onDeleteRequest }:
           <span className="info-label">End Date</span>
           <span className="info-value">{task.end_date}</span>
         </div>
+        {slackDays !== undefined && (
+          <div className="info-row">
+            <span className="info-label">Slack</span>
+            <span className={`info-value ${isCritical ? 'critical-text' : 'slack-text'}`}>
+              {isCritical ? (
+                <>⚡ Critical Path (0 days)</>
+              ) : (
+                <>{slackDays} {slackDays === 1 ? 'day' : 'days'}</>
+              )}
+            </span>
+          </div>
+        )}
         <div className="info-row">
           <span className="info-label">Version</span>
           <span className="info-value version-id">{task.calc_version_id.slice(0, 8)}...</span>

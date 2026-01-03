@@ -24,6 +24,41 @@
   box-shadow: 0 0 0 2px var(--accent-glow);
 }
 
+/* Critical Path Styling */
+.task-node.critical {
+  border-left-color: var(--danger);
+  background: linear-gradient(
+    135deg,
+    var(--node-bg) 0%,
+    rgba(239, 68, 68, 0.05) 100%
+  );
+}
+
+.task-node.critical:hover {
+  border-color: var(--danger);
+}
+
+.task-node.critical.selected {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3);
+}
+
+.critical-badge {
+  font-size: 0.75rem;
+  margin-left: 0.375rem;
+  color: var(--danger);
+  animation: critical-pulse 2s ease-in-out infinite;
+}
+
+@keyframes critical-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
 /* Content */
 .task-node-content {
   padding: 0.75rem 0.875rem 0.75rem 1rem;
@@ -31,6 +66,10 @@
 
 .task-node-header {
   margin-bottom: 0.5rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.25rem;
 }
 
 .task-title {

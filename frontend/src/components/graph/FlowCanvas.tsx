@@ -49,6 +49,7 @@ interface FlowCanvasProps {
   tasks: Task[];
   dependencies: Dependency[];
   selectedTaskId: string | null;
+  criticalPathTaskIds: Set<string>;
   onSelectTask: (taskId: string | null) => void;
   onCreateDependency: (predecessorId: string, successorId: string) => void;
   onDeleteDependency: (predecessorId: string, successorId: string) => void;
@@ -70,7 +71,11 @@ function getAutoLayoutPosition(index: number): { x: number; y: number } {
 /**
  * Convert tasks to ReactFlow nodes, using stored positions if available
  */
-function tasksToNodes(tasks: Task[], selectedTaskId: string | null): Node<TaskNodeData>[] {
+function tasksToNodes(
+  tasks: Task[],
+  selectedTaskId: string | null,
+  criticalPathTaskIds: Set<string>
+): Node<TaskNodeData>[] {
   return tasks.map((task, index) => {
     // Use stored position if available, otherwise auto-layout
     const position = (task.position_x !== null && task.position_y !== null)
@@ -84,6 +89,7 @@ function tasksToNodes(tasks: Task[], selectedTaskId: string | null): Node<TaskNo
       data: {
         task,
         isSelected: task.id === selectedTaskId,
+        isCritical: criticalPathTaskIds.has(task.id),
       } as TaskNodeData,
       selected: task.id === selectedTaskId,
     };
@@ -125,6 +131,7 @@ function FlowCanvasInner({
   tasks,
   dependencies,
   selectedTaskId,
+  criticalPathTaskIds,
   onSelectTask,
   onCreateDependency,
   onDeleteDependency,
@@ -137,8 +144,8 @@ function FlowCanvasInner({
   
   // Convert data to ReactFlow format
   const initialNodes = useMemo(
-    () => tasksToNodes(tasks, selectedTaskId),
-    [tasks, selectedTaskId]
+    () => tasksToNodes(tasks, selectedTaskId, criticalPathTaskIds),
+    [tasks, selectedTaskId, criticalPathTaskIds]
   );
   
   const initialEdges = useMemo(
@@ -162,7 +169,7 @@ function FlowCanvasInner({
     
     if (tasksChanged) {
       // Tasks were added/removed - do a full reset
-      setNodes(tasksToNodes(tasks, selectedTaskId) as Node[]);
+      setNodes(tasksToNodes(tasks, selectedTaskId, criticalPathTaskIds) as Node[]);
       // Fit view after a short delay to ensure nodes are rendered
       setTimeout(() => fitView({ padding: 0.2 }), 50);
     } else {
@@ -177,6 +184,7 @@ function FlowCanvasInner({
             data: {
               task,
               isSelected: task.id === selectedTaskId,
+              isCritical: criticalPathTaskIds.has(task.id),
             } as TaskNodeData,
             selected: task.id === selectedTaskId,
           };
@@ -185,7 +193,7 @@ function FlowCanvasInner({
     }
     
     prevTaskIdsRef.current = currentTaskIds;
-  }, [tasks, selectedTaskId, setNodes, fitView]);
+  }, [tasks, selectedTaskId, criticalPathTaskIds, setNodes, fitView]);
 
   // Update edges when dependencies change
   useEffect(() => {
@@ -306,6 +314,8 @@ function FlowCanvasInner({
         className="flow-minimap"
         nodeColor={(node) => {
           if (node.selected) return 'var(--accent-primary)';
+          const data = node.data as TaskNodeData;
+          if (data?.isCritical) return 'var(--danger)';
           return 'var(--node-bg)';
         }}
         maskColor="rgba(0, 0, 0, 0.2)"

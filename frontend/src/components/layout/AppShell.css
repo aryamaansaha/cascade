@@ -276,6 +276,15 @@
   font-weight: 500;
 }
 
+.info-value.critical-text {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.info-value.slack-text {
+  color: var(--success);
+}
+
 .version-id {
   font-family: monospace;
   font-size: 0.75rem;

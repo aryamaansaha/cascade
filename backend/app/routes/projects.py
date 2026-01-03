@@ -11,9 +11,17 @@ from sqlmodel import select
 
 from app.database import get_session
 from app.models import Project, Task, Dependency
-from app.schemas import ProjectCreate, ProjectUpdate, ProjectRead, ProjectStatus
+from app.schemas import (
+    ProjectCreate,
+    ProjectUpdate,
+    ProjectRead,
+    ProjectStatus,
+    CriticalPathAnalysis,
+    TaskCriticalAnalysis,
+)
 from app.exceptions import NotFoundError
 from app.logging_config import get_logger
+from app.services.critical_path import analyze_critical_path
 
 logger = get_logger(__name__)
 
@@ -175,4 +183,47 @@ async def get_project_status(
         task_count=task_count,
         is_over_deadline=is_over_deadline,
         days_over=days_over,
+    )
+
+
+@router.get("/{project_id}/critical-path", response_model=CriticalPathAnalysis)
+async def get_critical_path(
+    project_id: uuid.UUID,
+    session: AsyncSession = Depends(get_session),
+) -> CriticalPathAnalysis:
+    """
+    Get Critical Path Method (CPM) analysis for a project.
+    
+    Returns:
+    - project_end_date: The calculated project completion date
+    - critical_path_task_ids: IDs of tasks on the critical path (slack = 0)
+    - task_analyses: Detailed analysis for each task including slack times
+    """
+    project = await session.get(Project, project_id)
+    if not project:
+        raise NotFoundError("Project", str(project_id))
+    
+    analysis = await analyze_critical_path(session, project_id)
+    
+    if not analysis:
+        raise NotFoundError("Tasks", f"No tasks found in project {project_id}")
+    
+    return CriticalPathAnalysis(
+        project_id=analysis.project_id,
+        project_end_date=analysis.project_end_date,
+        critical_path_task_ids=analysis.critical_path_task_ids,
+        task_analyses=[
+            TaskCriticalAnalysis(
+                task_id=ta.task_id,
+                title=ta.title,
+                duration_days=ta.duration_days,
+                earliest_start=ta.earliest_start,
+                earliest_finish=ta.earliest_finish,
+                latest_start=ta.latest_start,
+                latest_finish=ta.latest_finish,
+                total_slack=ta.total_slack,
+                is_critical=ta.is_critical,
+            )
+            for ta in analysis.task_analyses
+        ],
     )

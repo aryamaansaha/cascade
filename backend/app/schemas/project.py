@@ -38,3 +38,24 @@ class ProjectStatus(BaseModel):
     is_over_deadline: bool
     days_over: int | None  # Positive if over, negative if ahead, None if no deadline
 
+
+class TaskCriticalAnalysis(BaseModel):
+    """CPM analysis for a single task."""
+    task_id: uuid.UUID
+    title: str
+    duration_days: int
+    earliest_start: date
+    earliest_finish: date
+    latest_start: date
+    latest_finish: date
+    total_slack: int  # Days of slack (0 = critical)
+    is_critical: bool
+
+
+class CriticalPathAnalysis(BaseModel):
+    """Complete CPM analysis for a project."""
+    project_id: uuid.UUID
+    project_end_date: date
+    critical_path_task_ids: list[uuid.UUID]
+    task_analyses: list[TaskCriticalAnalysis]
+
