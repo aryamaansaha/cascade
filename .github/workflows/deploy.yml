@@ -8,20 +8,22 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     
     steps:
-      - name: Deploy to VM
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.VM_HOST }}
-          username: ${{ secrets.VM_USERNAME }}
-          key: ${{ secrets.VM_SSH_KEY }}
-          script: |
-            cd /home/as7482/cascade
-            git pull origin main
-            docker compose -f docker-compose.prod.yml build --no-cache
-            docker compose -f docker-compose.prod.yml up -d
-            docker image prune -f
-            echo "Deployment completed at $(date)"
+      - name: Pull latest code
+        run: |
+          cd /home/as7482/cascade
+          git pull origin main
+          
+      - name: Build and deploy
+        run: |
+          cd /home/as7482/cascade
+          docker compose -f docker-compose.prod.yml build --no-cache
+          docker compose -f docker-compose.prod.yml up -d
+          
+      - name: Cleanup
+        run: |
+          docker image prune -f
+          echo "Deployment completed at $(date)"
 
