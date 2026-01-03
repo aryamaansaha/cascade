@@ -9,7 +9,7 @@
  * - Persisting node positions
  */
 
-import { useCallback, useMemo, useEffect, useRef, useState } from 'react';
+import { useCallback, useMemo, useEffect, useRef } from 'react';
 import {
   ReactFlow,
   Background,
@@ -168,7 +168,7 @@ function FlowCanvasInner({
   onDeleteDependency,
   onUpdateTaskPosition,
   linkModeSourceId,
-  onStartLinkMode,
+  onStartLinkMode: _onStartLinkMode,
   onCancelLinkMode,
 }: FlowCanvasProps) {
   // Track task IDs to detect additions/removals
