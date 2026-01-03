@@ -74,7 +74,3 @@ npm run dev
 
 MIT
 
----
-
-Built with ☕ and a healthy fear of missed deadlines.
-
