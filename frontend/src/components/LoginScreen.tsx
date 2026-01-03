@@ -9,10 +9,7 @@ import { notify } from '../utils/notifications';
 import './LoginScreen.css';
 
 export function LoginScreen() {
-  const { loginWithGoogle, loginWithEmail, signUpWithEmail } = useAuth();
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const { loginWithGoogle } = useAuth();
   const [loading, setLoading] = useState(false);
 
   const handleGoogleLogin = async () => {
@@ -27,45 +24,21 @@ export function LoginScreen() {
     }
   };
 
-  const handleEmailAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password) {
-      notify.error('Please enter email and password');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      if (isSignUp) {
-        await signUpWithEmail(email, password);
-        notify.success('Account created! Welcome to Cascade!');
-      } else {
-        await loginWithEmail(email, password);
-        notify.success('Welcome back!');
-      }
-    } catch (error: any) {
-      const message = error.message?.includes('user-not-found')
-        ? 'No account found with this email'
-        : error.message?.includes('wrong-password')
-        ? 'Incorrect password'
-        : error.message?.includes('email-already-in-use')
-        ? 'Email already in use'
-        : error.message || 'Authentication failed';
-      notify.error(message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="login-screen">
       <div className="login-container">
+        {/* Header with logo and tagline */}
         <div className="login-header">
           <img src="/cascade_logo.png" alt="Cascade" className="login-logo" />
           <h1>Cascade</h1>
-          <p>Project scheduling with critical path analysis</p>
+          <h2 className="login-tagline">Plan smarter, ship faster</h2>
+          <p className="login-description">
+            Visual project scheduling with automatic dependency management.
+            See what's critical, plan for delays, never miss a deadline.
+          </p>
         </div>
 
+        {/* Google Sign In */}
         <div className="login-form">
           <button
             className="btn-google"
@@ -80,45 +53,25 @@ export function LoginScreen() {
             </svg>
             {loading ? 'Signing in...' : 'Continue with Google'}
           </button>
+        </div>
 
-          <div className="divider">
-            <span>or</span>
+        {/* Feature highlights */}
+        <div className="login-features">
+          <div className="feature">
+            <span className="feature-icon">📊</span>
+            <h3>Critical Path Analysis</h3>
+            <p>Automatically identify bottlenecks and dependencies</p>
           </div>
-
-          <form onSubmit={handleEmailAuth}>
-            <div className="form-group">
-              <input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={loading}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={loading}
-                minLength={6}
-                required
-              />
-            </div>
-            <button type="submit" className="btn-primary" disabled={loading}>
-              {loading ? 'Please wait...' : isSignUp ? 'Sign Up' : 'Sign In'}
-            </button>
-          </form>
-
-          <button
-            className="btn-text"
-            onClick={() => setIsSignUp(!isSignUp)}
-            disabled={loading}
-          >
-            {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
-          </button>
+          <div className="feature">
+            <span className="feature-icon">⚡</span>
+            <h3>Real-time Updates</h3>
+            <p>Changes propagate instantly across the graph</p>
+          </div>
+          <div className="feature">
+            <span className="feature-icon">↩️</span>
+            <h3>Undo/Redo</h3>
+            <p>Never lose your work with full history</p>
+          </div>
         </div>
       </div>
     </div>
