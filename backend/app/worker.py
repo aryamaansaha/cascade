@@ -24,8 +24,11 @@ settings = get_settings()
 
 def parse_redis_url(url: str) -> RedisSettings:
     """Parse redis URL into RedisSettings."""
-    # redis://localhost:6380 -> host=localhost, port=6380
+    # redis://localhost:6380/0 -> host=localhost, port=6380, database=0
     url = url.replace("redis://", "")
+    # Strip database number if present
+    if "/" in url:
+        url = url.split("/")[0]
     if ":" in url:
         host, port = url.split(":")
         return RedisSettings(host=host, port=int(port))

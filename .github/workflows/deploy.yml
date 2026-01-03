@@ -21,8 +21,7 @@ jobs:
       - name: Build and deploy
         run: |
           cd /home/as7482/cascade
-          docker compose -f docker-compose.prod.yml build --no-cache
-          docker compose -f docker-compose.prod.yml up -d
+          docker compose -f docker-compose.prod.yml up -d --build
           
       - name: Cleanup
         run: |

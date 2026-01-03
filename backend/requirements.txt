@@ -4,6 +4,9 @@ uvicorn[standard]
 pydantic
 pydantic-settings
 
+# Auth
+firebase-admin
+
 # Database
 sqlmodel
 asyncpg
