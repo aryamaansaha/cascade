@@ -7,8 +7,8 @@
  * - Task editing via the inspector
  */
 
-import { useState, useCallback, useMemo } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 
 import { AppShell } from './components/layout/AppShell';
 import { FlowCanvas } from './components/graph/FlowCanvas';
@@ -58,6 +58,22 @@ export default function App() {
 function CascadeApp() {
   // Auth
   const { user, loading: authLoading, logout } = useAuth();
+  const queryClient = useQueryClient();
+  const prevUserIdRef = useRef<string | null>(null);
+
+  // Clear cache and reset state when user changes (login/logout/switch account)
+  useEffect(() => {
+    const currentUserId = user?.uid ?? null;
+    
+    if (prevUserIdRef.current !== null && prevUserIdRef.current !== currentUserId) {
+      // User changed - clear all cached data and reset state
+      queryClient.clear();
+      setSelectedProjectId(null);
+      setSelectedTaskId(null);
+      setSearchTerm('');
+    }
+    prevUserIdRef.current = currentUserId;
+  }, [user?.uid, queryClient]);
 
   // State
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
