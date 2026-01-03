@@ -190,16 +190,19 @@
 .canvas-toolbar {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
   padding: 0.75rem 1rem;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
+  min-height: 52px;
 }
 
 .toolbar-hint {
   font-size: 0.75rem;
   color: var(--text-tertiary);
   margin-left: auto;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* Search Input */
@@ -207,10 +210,13 @@
   position: relative;
   display: flex;
   align-items: center;
+  flex-shrink: 1;
+  min-width: 180px;
 }
 
 .search-input {
-  width: 220px;
+  width: 100%;
+  max-width: 240px;
   padding: 0.5rem 2rem 0.5rem 0.75rem;
   font-size: 0.875rem;
   background: var(--bg-primary);
@@ -437,7 +443,7 @@
 }
 
 .btn-secondary {
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 0.875rem;
   background: var(--bg-tertiary);
   border: 1px solid var(--border-color);
   border-radius: 6px;
@@ -446,6 +452,8 @@
   color: var(--text-primary);
   cursor: pointer;
   transition: all 0.15s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .btn-secondary:hover {
@@ -522,5 +530,27 @@
 .deadline-details {
   font-size: 0.75rem;
   opacity: 0.8;
+}
+
+/* =============================================================================
+   Responsive Layout
+   ============================================================================= */
+
+/* Make toolbar more compact on smaller screens */
+@media (max-width: 1200px) {
+  .canvas-toolbar {
+    gap: 0.5rem;
+  }
+  
+  .search-input {
+    max-width: 180px;
+  }
+}
+
+/* Hide hint text only on very small screens to prevent overflow */
+@media (max-width: 1000px) {
+  .toolbar-hint {
+    display: none;
+  }
 }
 

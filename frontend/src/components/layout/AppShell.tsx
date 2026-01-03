@@ -175,7 +175,7 @@ export function AppShell({
                 )}
               </div>
               <span className="toolbar-hint">
-                💡 Drag between handles to connect • Ctrl+Z to undo
+                💡 Drag handles to connect • Ctrl+Z undo
               </span>
             </div>
             
