@@ -61,11 +61,16 @@ function CascadeApp() {
   const queryClient = useQueryClient();
   const prevUserIdRef = useRef<string | null>(null);
 
-  // Clear cache and reset state when user changes (login/logout/switch account)
+  // State
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Clear cache and reset state when user changes
   useEffect(() => {
     const currentUserId = user?.uid ?? null;
     
-    if (prevUserIdRef.current !== null && prevUserIdRef.current !== currentUserId) {
+    if (prevUserIdRef.current !== currentUserId) {
       // User changed - clear all cached data and reset state
       queryClient.clear();
       setSelectedProjectId(null);
@@ -74,11 +79,6 @@ function CascadeApp() {
     }
     prevUserIdRef.current = currentUserId;
   }, [user?.uid, queryClient]);
-
-  // State
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
   
   // Modal state
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
@@ -109,6 +109,24 @@ function CascadeApp() {
   // Undo/Redo
   const { recordOperation } = useUndoRedo();
   useUndoRedoKeyboard(); // Enable Ctrl+Z / Ctrl+Shift+Z
+
+  // Enhanced logout that clears cache immediately
+  const handleLogout = useCallback(async () => {
+    // Clear cache BEFORE logging out to prevent showing stale data
+    queryClient.clear();
+    setSelectedProjectId(null);
+    setSelectedTaskId(null);
+    setSearchTerm('');
+    await logout();
+  }, [logout, queryClient]);
+
+  // Auto-clear selection if the selected project doesn't exist in user's projects
+  useEffect(() => {
+    if (selectedProjectId && projects.length > 0 && !projects.some(p => p.id === selectedProjectId)) {
+      setSelectedProjectId(null);
+      setSelectedTaskId(null);
+    }
+  }, [selectedProjectId, projects]);
 
   // Get selected task
   const selectedTask = selectedTaskId
@@ -335,7 +353,7 @@ function CascadeApp() {
         onSelectProject={handleSelectProject}
         onCreateProject={() => setIsProjectModalOpen(true)}
         onDeleteProject={handleDeleteProject}
-        onLogout={logout}
+        onLogout={handleLogout}
         userEmail={user?.email}
         selectedTask={selectedTask}
         tasks={tasks}
@@ -344,7 +362,7 @@ function CascadeApp() {
         onDeleteTask={handleDeleteTask}
         onCreateTask={() => setIsTaskModalOpen(true)}
       >
-        {selectedProjectId && (
+        {selectedProjectId && projects.some(p => p.id === selectedProjectId) && (
           <FlowCanvas
             tasks={tasks}
             dependencies={dependencies}
