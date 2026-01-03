@@ -19,5 +19,8 @@ class Project(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     
     # Relationships
-    tasks: list["Task"] = Relationship(back_populates="project")
+    tasks: list["Task"] = Relationship(
+        back_populates="project",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"},
+    )
 

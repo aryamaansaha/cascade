@@ -6,10 +6,11 @@ import uuid
 from datetime import datetime
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import delete as sql_delete
 from sqlmodel import select
 
 from app.database import get_session
-from app.models import Project
+from app.models import Project, Task, Dependency
 from app.schemas import ProjectCreate, ProjectUpdate, ProjectRead
 from app.exceptions import NotFoundError
 from app.logging_config import get_logger
@@ -96,4 +97,27 @@ async def delete_project(
     
     logger.info(f"Deleting project {project_id}: '{project.name}'")
     
+    # Get all task IDs for this project
+    task_ids_result = await session.execute(
+        select(Task.id).where(Task.project_id == project_id)
+    )
+    task_ids = [row[0] for row in task_ids_result.fetchall()]
+    
+    if task_ids:
+        # Delete all dependencies involving these tasks
+        await session.execute(
+            sql_delete(Dependency).where(
+                (Dependency.predecessor_id.in_(task_ids)) | 
+                (Dependency.successor_id.in_(task_ids))
+            )
+        )
+        
+        # Delete all tasks in this project
+        await session.execute(
+            sql_delete(Task).where(Task.project_id == project_id)
+        )
+        
+        logger.info(f"Deleted {len(task_ids)} tasks from project {project_id}")
+    
+    # Delete the project
     await session.delete(project)

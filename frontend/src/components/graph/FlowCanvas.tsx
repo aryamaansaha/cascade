@@ -51,6 +51,7 @@ interface FlowCanvasProps {
   selectedTaskId: string | null;
   onSelectTask: (taskId: string | null) => void;
   onCreateDependency: (predecessorId: string, successorId: string) => void;
+  onDeleteDependency: (predecessorId: string, successorId: string) => void;
   onUpdateTaskPosition: (taskId: string, x: number, y: number) => void;
 }
 
@@ -126,10 +127,12 @@ function FlowCanvasInner({
   selectedTaskId,
   onSelectTask,
   onCreateDependency,
+  onDeleteDependency,
   onUpdateTaskPosition,
 }: FlowCanvasProps) {
   // Track task IDs to detect additions/removals
   const prevTaskIdsRef = useRef<Set<string>>(new Set());
+  const selectedEdgeRef = useRef<string | null>(null);
   const { fitView } = useReactFlow();
   
   // Convert data to ReactFlow format
@@ -205,11 +208,6 @@ function FlowCanvasInner({
     [onSelectTask]
   );
 
-  // Handle background click (deselect)
-  const onPaneClick = useCallback(() => {
-    onSelectTask(null);
-  }, [onSelectTask]);
-
   // Handle new edge connections (create dependency)
   const onConnect: OnConnect = useCallback(
     (connection) => {
@@ -220,6 +218,62 @@ function FlowCanvasInner({
     [onCreateDependency]
   );
 
+  // Handle edge click (select edge)
+  const onEdgeClick = useCallback(
+    (_event: React.MouseEvent, edge: Edge) => {
+      selectedEdgeRef.current = edge.id;
+      // Update edge styles to show selection
+      setEdges(currentEdges =>
+        currentEdges.map(e => ({
+          ...e,
+          selected: e.id === edge.id,
+          style: {
+            ...e.style,
+            strokeWidth: e.id === edge.id ? 3 : 2,
+            stroke: e.id === edge.id ? 'var(--danger)' : undefined,
+          },
+        }))
+      );
+      // Deselect any selected task
+      onSelectTask(null);
+    },
+    [setEdges, onSelectTask]
+  );
+
+  // Handle keyboard events for edge deletion
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.key === 'Delete' || event.key === 'Backspace') && selectedEdgeRef.current) {
+        const edgeId = selectedEdgeRef.current;
+        const [predecessorId, successorId] = edgeId.split('-');
+        if (predecessorId && successorId) {
+          onDeleteDependency(predecessorId, successorId);
+          selectedEdgeRef.current = null;
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onDeleteDependency]);
+
+  // Clear edge selection when clicking on pane
+  const handlePaneClick = useCallback(() => {
+    selectedEdgeRef.current = null;
+    setEdges(currentEdges =>
+      currentEdges.map(e => ({
+        ...e,
+        selected: false,
+        style: {
+          ...e.style,
+          strokeWidth: 2,
+          stroke: undefined,
+        },
+      }))
+    );
+    onSelectTask(null);
+  }, [setEdges, onSelectTask]);
+
   return (
     <ReactFlow
       nodes={nodes}
@@ -228,8 +282,9 @@ function FlowCanvasInner({
       onEdgesChange={onEdgesChange}
       onConnect={onConnect}
       onNodeClick={onNodeClick}
+      onEdgeClick={onEdgeClick}
       onNodeDragStop={onNodeDragStop}
-      onPaneClick={onPaneClick}
+      onPaneClick={handlePaneClick}
       nodeTypes={nodeTypes}
       connectionMode={ConnectionMode.Loose}
       fitView
@@ -238,6 +293,7 @@ function FlowCanvasInner({
         type: 'smoothstep',
         style: { strokeWidth: 2 },
       }}
+      deleteKeyCode={null}
     >
       <Background
         variant={BackgroundVariant.Dots}

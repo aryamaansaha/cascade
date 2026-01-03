@@ -17,12 +17,14 @@ import { CreateTaskModal } from './components/CreateTaskModal';
 import {
   useProjects,
   useCreateProject,
+  useDeleteProject,
   useTasks,
   useCreateTask,
   useUpdateTask,
   useDeleteTask,
   useDependencies,
   useCreateDependency,
+  useDeleteDependency,
 } from './hooks/useProjectData';
 import type { Task, TaskCreate, ProjectCreate, ApiError } from './api/types';
 
@@ -63,10 +65,12 @@ function CascadeApp() {
 
   // Mutations
   const createProjectMutation = useCreateProject();
+  const deleteProjectMutation = useDeleteProject();
   const createTaskMutation = useCreateTask();
   const updateTaskMutation = useUpdateTask();
   const deleteTaskMutation = useDeleteTask();
   const createDependencyMutation = useCreateDependency();
+  const deleteDependencyMutation = useDeleteDependency();
 
   // Get selected task
   const selectedTask = selectedTaskId
@@ -83,6 +87,21 @@ function CascadeApp() {
     const project = await createProjectMutation.mutateAsync(data);
     setSelectedProjectId(project.id);
   }, [createProjectMutation]);
+
+  const handleDeleteProject = useCallback(async (id: string) => {
+    try {
+      await deleteProjectMutation.mutateAsync(id);
+      // If we deleted the selected project, clear selection
+      if (selectedProjectId === id) {
+        setSelectedProjectId(null);
+        setSelectedTaskId(null);
+      }
+    } catch (error) {
+      const apiError = error as ApiError;
+      console.error('Failed to delete project:', apiError.message);
+      throw error; // Re-throw so the modal knows it failed
+    }
+  }, [deleteProjectMutation, selectedProjectId]);
 
   const handleSelectTask = useCallback((taskId: string | null) => {
     setSelectedTaskId(taskId);
@@ -134,6 +153,18 @@ function CascadeApp() {
     [createDependencyMutation]
   );
 
+  const handleDeleteDependency = useCallback(
+    async (predecessorId: string, successorId: string) => {
+      try {
+        await deleteDependencyMutation.mutateAsync({ predecessorId, successorId });
+      } catch (error) {
+        const apiError = error as ApiError;
+        console.error('Failed to delete dependency:', apiError.message);
+      }
+    },
+    [deleteDependencyMutation]
+  );
+
   const handleUpdateTaskPosition = useCallback(
     async (taskId: string, x: number, y: number) => {
       try {
@@ -164,6 +195,7 @@ function CascadeApp() {
         selectedProjectId={selectedProjectId}
         onSelectProject={handleSelectProject}
         onCreateProject={() => setIsProjectModalOpen(true)}
+        onDeleteProject={handleDeleteProject}
         selectedTask={selectedTask}
         onUpdateTask={handleUpdateTask}
         onDeleteTask={handleDeleteTask}
@@ -176,6 +208,7 @@ function CascadeApp() {
             selectedTaskId={selectedTaskId}
             onSelectTask={handleSelectTask}
             onCreateDependency={handleCreateDependency}
+            onDeleteDependency={handleDeleteDependency}
             onUpdateTaskPosition={handleUpdateTaskPosition}
           />
         )}

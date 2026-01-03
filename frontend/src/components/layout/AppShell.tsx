@@ -13,6 +13,7 @@ interface AppShellProps {
   selectedProjectId: string | null;
   onSelectProject: (id: string) => void;
   onCreateProject: () => void;
+  onDeleteProject: (id: string) => Promise<void>;
   // Center canvas
   children: React.ReactNode;
   // Right inspector
@@ -27,29 +28,54 @@ export function AppShell({
   selectedProjectId,
   onSelectProject,
   onCreateProject,
+  onDeleteProject,
   children,
   selectedTask,
   onUpdateTask,
   onDeleteTask,
   onCreateTask,
 }: AppShellProps) {
-  // Delete confirmation state
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  // Task delete confirmation state
+  const [deleteTaskConfirmOpen, setDeleteTaskConfirmOpen] = useState(false);
+  const [isDeletingTask, setIsDeletingTask] = useState(false);
 
-  const handleDeleteRequest = () => {
-    setDeleteConfirmOpen(true);
+  // Project delete confirmation state
+  const [deleteProjectConfirmOpen, setDeleteProjectConfirmOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+  const [isDeletingProject, setIsDeletingProject] = useState(false);
+
+  const handleDeleteTaskRequest = () => {
+    setDeleteTaskConfirmOpen(true);
   };
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteTaskConfirm = async () => {
     if (!selectedTask) return;
     
-    setIsDeleting(true);
+    setIsDeletingTask(true);
     try {
       await onDeleteTask(selectedTask.id);
-      setDeleteConfirmOpen(false);
+      setDeleteTaskConfirmOpen(false);
     } finally {
-      setIsDeleting(false);
+      setIsDeletingTask(false);
+    }
+  };
+
+  const handleDeleteProjectRequest = (project: Project, e: React.MouseEvent) => {
+    e.stopPropagation(); // Don't select the project
+    setProjectToDelete(project);
+    setDeleteProjectConfirmOpen(true);
+  };
+
+  const handleDeleteProjectConfirm = async () => {
+    if (!projectToDelete) return;
+    
+    setIsDeletingProject(true);
+    try {
+      await onDeleteProject(projectToDelete.id);
+      setDeleteProjectConfirmOpen(false);
+      setProjectToDelete(null);
+    } finally {
+      setIsDeletingProject(false);
     }
   };
 
@@ -77,6 +103,13 @@ export function AppShell({
               >
                 <span className="project-icon">📁</span>
                 <span className="project-name">{project.name}</span>
+                <button
+                  className="btn-icon project-delete"
+                  onClick={(e) => handleDeleteProjectRequest(project, e)}
+                  title="Delete Project"
+                >
+                  ×
+                </button>
               </li>
             ))}
             {projects.length === 0 && (
@@ -95,7 +128,7 @@ export function AppShell({
                 + New Task
               </button>
               <span className="toolbar-hint">
-                💡 Drag from a task's right handle to another task's left handle to create a dependency
+                💡 Drag between handles to connect tasks • Click an edge + Delete to remove
               </span>
             </div>
             {children}
@@ -121,7 +154,7 @@ export function AppShell({
             <TaskInspector
               task={selectedTask}
               onUpdate={onUpdateTask}
-              onDeleteRequest={handleDeleteRequest}
+              onDeleteRequest={handleDeleteTaskRequest}
             />
           ) : (
             <div className="empty-state">
@@ -131,16 +164,31 @@ export function AppShell({
         </div>
       </aside>
 
-      {/* Delete Confirmation Modal */}
+      {/* Delete Task Confirmation Modal */}
       <ConfirmModal
-        isOpen={deleteConfirmOpen}
-        onClose={() => setDeleteConfirmOpen(false)}
-        onConfirm={handleDeleteConfirm}
+        isOpen={deleteTaskConfirmOpen}
+        onClose={() => setDeleteTaskConfirmOpen(false)}
+        onConfirm={handleDeleteTaskConfirm}
         title="Delete Task"
         message={`Are you sure you want to delete "${selectedTask?.title}"? This action cannot be undone, and any dependent tasks may be affected.`}
         confirmText="Delete Task"
         confirmVariant="danger"
-        isLoading={isDeleting}
+        isLoading={isDeletingTask}
+      />
+
+      {/* Delete Project Confirmation Modal */}
+      <ConfirmModal
+        isOpen={deleteProjectConfirmOpen}
+        onClose={() => {
+          setDeleteProjectConfirmOpen(false);
+          setProjectToDelete(null);
+        }}
+        onConfirm={handleDeleteProjectConfirm}
+        title="Delete Project"
+        message={`Are you sure you want to delete "${projectToDelete?.name}"? This will permanently delete all tasks and dependencies in this project.`}
+        confirmText="Delete Project"
+        confirmVariant="danger"
+        isLoading={isDeletingProject}
       />
     </div>
   );

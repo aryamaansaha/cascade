@@ -44,12 +44,18 @@ class Task(SQLModel, table=True):
     # Dependencies where this task is the predecessor (blocker)
     successors: list["Dependency"] = Relationship(
         back_populates="predecessor",
-        sa_relationship_kwargs={"foreign_keys": "Dependency.predecessor_id"},
+        sa_relationship_kwargs={
+            "foreign_keys": "Dependency.predecessor_id",
+            "cascade": "all, delete-orphan",
+        },
     )
     
     # Dependencies where this task is the successor (blocked)
     predecessors: list["Dependency"] = Relationship(
         back_populates="successor",
-        sa_relationship_kwargs={"foreign_keys": "Dependency.successor_id"},
+        sa_relationship_kwargs={
+            "foreign_keys": "Dependency.successor_id",
+            "cascade": "all, delete-orphan",
+        },
     )
 

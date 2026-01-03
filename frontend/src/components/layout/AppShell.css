@@ -107,10 +107,34 @@
 }
 
 .project-name {
+  flex: 1;
   font-size: 0.875rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.project-delete {
+  opacity: 0;
+  font-size: 1.25rem;
+  color: var(--text-tertiary);
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.project-item:hover .project-delete {
+  opacity: 1;
+}
+
+.project-delete:hover {
+  color: var(--danger) !important;
+}
+
+.project-item.active .project-delete {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.project-item.active .project-delete:hover {
+  color: white !important;
 }
 
 /* =============================================================================
