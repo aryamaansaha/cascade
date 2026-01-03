@@ -20,6 +20,8 @@ interface AppShellProps {
   onSelectProject: (id: string) => void;
   onCreateProject: () => void;
   onDeleteProject: (id: string) => Promise<void>;
+  onLogout: () => Promise<void>;
+  userEmail?: string | null;
   // Center canvas
   children: React.ReactNode;
   // Right inspector
@@ -41,6 +43,8 @@ export function AppShell({
   onSelectProject,
   onCreateProject,
   onDeleteProject,
+  onLogout,
+  userEmail,
   children,
   selectedTask,
   tasks,
@@ -101,6 +105,17 @@ export function AppShell({
           <img src="/cascade_logo.png" alt="Cascade" className="logo-icon" />
           <h1 className="logo">Cascade</h1>
         </div>
+        
+        {/* User info */}
+        {userEmail && (
+          <div className="user-info">
+            <span className="user-email">{userEmail}</span>
+            <button className="btn-logout" onClick={onLogout} title="Sign out">
+              ↗
+            </button>
+          </div>
+        )}
+        
         <div className="sidebar-content">
           <div className="section-header">
             <span>Projects</span>

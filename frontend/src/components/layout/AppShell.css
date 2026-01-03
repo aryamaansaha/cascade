@@ -55,6 +55,42 @@
   background-clip: text;
 }
 
+/* User Info */
+.user-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-color);
+  gap: 0.5rem;
+}
+
+.user-email {
+  font-size: 0.813rem;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.btn-logout {
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  font-size: 1.125rem;
+  line-height: 1;
+  transition: color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.btn-logout:hover {
+  color: var(--text-primary);
+}
+
 .sidebar-content {
   flex: 1;
   overflow-y: auto;

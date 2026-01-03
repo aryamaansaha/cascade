@@ -14,6 +14,7 @@ import { AppShell } from './components/layout/AppShell';
 import { FlowCanvas } from './components/graph/FlowCanvas';
 import { CreateProjectModal } from './components/CreateProjectModal';
 import { CreateTaskModal } from './components/CreateTaskModal';
+import { LoginScreen } from './components/LoginScreen';
 import {
   useProjects,
   useCreateProject,
@@ -31,6 +32,7 @@ import {
 import type { Task, TaskCreate, ProjectCreate, ApiError } from './api/types';
 import { notify } from './utils/notifications';
 import { useUndoRedo, useUndoRedoKeyboard } from './hooks/useUndoRedo';
+import { useAuth } from './hooks/useAuth';
 
 import './index.css';
 
@@ -54,6 +56,9 @@ export default function App() {
 }
 
 function CascadeApp() {
+  // Auth
+  const { user, loading: authLoading, logout } = useAuth();
+
   // State
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -278,6 +283,21 @@ function CascadeApp() {
     [updateTaskMutation]
   );
 
+  // Show loading while auth is initializing
+  if (authLoading) {
+    return (
+      <div className="loading-screen">
+        <div className="loading-spinner" />
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  // Show login screen if not authenticated
+  if (!user) {
+    return <LoginScreen />;
+  }
+
   if (projectsLoading) {
     return (
       <div className="loading-screen">
@@ -299,6 +319,8 @@ function CascadeApp() {
         onSelectProject={handleSelectProject}
         onCreateProject={() => setIsProjectModalOpen(true)}
         onDeleteProject={handleDeleteProject}
+        onLogout={logout}
+        userEmail={user?.email}
         selectedTask={selectedTask}
         tasks={tasks}
         dependencies={dependencies}

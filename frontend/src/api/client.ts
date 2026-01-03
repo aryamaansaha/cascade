@@ -3,6 +3,7 @@
  */
 
 import axios, { AxiosError } from 'axios';
+import { auth } from '../lib/firebase';
 import type {
   Project,
   ProjectCreate,
@@ -25,6 +26,20 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+});
+
+// Add Firebase auth token to all requests
+api.interceptors.request.use(async (config) => {
+  const user = auth.currentUser;
+  if (user) {
+    try {
+      const token = await user.getIdToken();
+      config.headers.Authorization = `Bearer ${token}`;
+    } catch (error) {
+      console.error('Failed to get auth token:', error);
+    }
+  }
+  return config;
 });
 
 // Error handler helper
