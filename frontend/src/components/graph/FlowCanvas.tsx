@@ -95,7 +95,7 @@ function tasksToNodes(tasks: Task[], selectedTaskId: string | null): Node<TaskNo
  */
 function dependenciesToEdges(dependencies: Dependency[]): Edge[] {
   return dependencies.map((dep) => ({
-    id: `${dep.predecessor_id}-${dep.successor_id}`,
+    id: `${dep.predecessor_id}::${dep.successor_id}`,
     source: dep.predecessor_id,
     target: dep.successor_id,
     type: 'smoothstep',
@@ -245,7 +245,7 @@ function FlowCanvasInner({
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.key === 'Delete' || event.key === 'Backspace') && selectedEdgeRef.current) {
         const edgeId = selectedEdgeRef.current;
-        const [predecessorId, successorId] = edgeId.split('-');
+        const [predecessorId, successorId] = edgeId.split('::');
         if (predecessorId && successorId) {
           onDeleteDependency(predecessorId, successorId);
           selectedEdgeRef.current = null;
