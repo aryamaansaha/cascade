@@ -73,6 +73,12 @@ export function LoginScreen() {
             <p>Simulate changes without breaking your schedule</p>
           </div>
         </div>
+
+        {/* Mobile notice - only visible on small screens */}
+        <div className="mobile-notice">
+          <span className="mobile-notice-icon">💻</span>
+          <p>For the best experience with drag-and-drop graph editing, try Cascade on desktop.</p>
+        </div>
       </div>
     </div>
   );
