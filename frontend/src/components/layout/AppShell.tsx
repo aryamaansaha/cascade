@@ -58,6 +58,7 @@ export function AppShell({
       {/* Left Sidebar - Projects */}
       <aside className="sidebar sidebar-left">
         <div className="sidebar-header">
+          <img src="/cascade_logo.png" alt="Cascade" className="logo-icon" />
           <h1 className="logo">Cascade</h1>
         </div>
         <div className="sidebar-content">
