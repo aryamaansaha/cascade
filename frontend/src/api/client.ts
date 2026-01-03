@@ -7,6 +7,7 @@ import type {
   Project,
   ProjectCreate,
   ProjectUpdate,
+  ProjectStatus,
   Task,
   TaskCreate,
   TaskUpdate,
@@ -69,6 +70,11 @@ export const projectApi = {
 
   delete: async (id: string): Promise<void> => {
     await api.delete(`/projects/${id}`);
+  },
+
+  getStatus: async (id: string): Promise<ProjectStatus> => {
+    const response = await api.get<ProjectStatus>(`/projects/${id}/status`);
+    return response.data;
   },
 };
 

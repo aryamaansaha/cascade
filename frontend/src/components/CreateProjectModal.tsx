@@ -19,6 +19,7 @@ export function CreateProjectModal({
 }: CreateProjectModalProps) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [deadline, setDeadline] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,6 +28,7 @@ export function CreateProjectModal({
     if (isOpen) {
       setName('');
       setDescription('');
+      setDeadline('');
       setError(null);
     }
   }, [isOpen]);
@@ -46,6 +48,7 @@ export function CreateProjectModal({
       await onSubmit({
         name: name.trim(),
         description: description.trim() || undefined,
+        deadline: deadline || undefined,
       });
       onClose();
     } catch (err) {
@@ -78,6 +81,17 @@ export function CreateProjectModal({
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Optional project description"
           />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="project-deadline">Deadline (optional)</label>
+          <input
+            id="project-deadline"
+            type="date"
+            value={deadline}
+            onChange={(e) => setDeadline(e.target.value)}
+          />
+          <span className="form-hint">Set a target completion date to track progress</span>
         </div>
 
         {error && <div className="form-error">{error}</div>}

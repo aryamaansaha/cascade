@@ -11,6 +11,7 @@ export interface Project {
   id: string;
   name: string;
   description: string | null;
+  deadline: string | null;  // ISO date string (YYYY-MM-DD)
   created_at: string;
   updated_at: string;
 }
@@ -18,11 +19,22 @@ export interface Project {
 export interface ProjectCreate {
   name: string;
   description?: string | null;
+  deadline?: string | null;
 }
 
 export interface ProjectUpdate {
   name?: string;
   description?: string | null;
+  deadline?: string | null;
+}
+
+export interface ProjectStatus {
+  project_id: string;
+  deadline: string | null;
+  projected_end_date: string | null;
+  task_count: number;
+  is_over_deadline: boolean;
+  days_over: number | null;
 }
 
 // =============================================================================

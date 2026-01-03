@@ -11,7 +11,7 @@ from sqlmodel import select
 
 from app.database import get_session
 from app.models import Project, Task, Dependency
-from app.schemas import ProjectCreate, ProjectUpdate, ProjectRead
+from app.schemas import ProjectCreate, ProjectUpdate, ProjectRead, ProjectStatus
 from app.exceptions import NotFoundError
 from app.logging_config import get_logger
 
@@ -121,3 +121,58 @@ async def delete_project(
     
     # Delete the project
     await session.delete(project)
+
+
+@router.get("/{project_id}/status", response_model=ProjectStatus)
+async def get_project_status(
+    project_id: uuid.UUID,
+    session: AsyncSession = Depends(get_session),
+) -> ProjectStatus:
+    """
+    Get project status including deadline analysis.
+    
+    Returns:
+    - projected_end_date: The latest end_date among all tasks
+    - is_over_deadline: True if projected > deadline
+    - days_over: How many days over (positive) or ahead (negative)
+    """
+    project = await session.get(Project, project_id)
+    if not project:
+        raise NotFoundError("Project", str(project_id))
+    
+    # Calculate projected end date from tasks
+    # end_date = start_date + duration_days - 1
+    tasks_result = await session.execute(
+        select(Task.start_date, Task.duration_days).where(Task.project_id == project_id)
+    )
+    tasks_data = tasks_result.all()
+    
+    projected_end_date = None
+    task_count = len(tasks_data)
+    if tasks_data:
+        from datetime import timedelta
+        end_dates = []
+        for start_date, duration_days in tasks_data:
+            if duration_days == 0:
+                end_dates.append(start_date)
+            else:
+                end_dates.append(start_date + timedelta(days=duration_days - 1))
+        projected_end_date = max(end_dates)
+    
+    # Calculate deadline status
+    is_over_deadline = False
+    days_over = None
+    
+    if project.deadline and projected_end_date:
+        delta = (projected_end_date - project.deadline).days
+        days_over = delta
+        is_over_deadline = delta > 0
+    
+    return ProjectStatus(
+        project_id=project_id,
+        deadline=project.deadline,
+        projected_end_date=projected_end_date,
+        task_count=task_count,
+        is_over_deadline=is_over_deadline,
+        days_over=days_over,
+    )

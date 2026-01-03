@@ -18,6 +18,7 @@ import {
   useProjects,
   useCreateProject,
   useDeleteProject,
+  useProjectStatus,
   useTasks,
   useCreateTask,
   useUpdateTask,
@@ -63,6 +64,7 @@ function CascadeApp() {
   const { data: projects = [], isLoading: projectsLoading } = useProjects();
   const { data: tasks = [] } = useTasks(selectedProjectId ?? undefined);
   const { data: dependencies = [] } = useDependencies(selectedProjectId ?? undefined);
+  const { data: projectStatus } = useProjectStatus(selectedProjectId ?? undefined);
 
   // Mutations
   const createProjectMutation = useCreateProject();
@@ -200,6 +202,7 @@ function CascadeApp() {
       <AppShell
         projects={projects}
         selectedProjectId={selectedProjectId}
+        projectStatus={projectStatus}
         onSelectProject={handleSelectProject}
         onCreateProject={() => setIsProjectModalOpen(true)}
         onDeleteProject={handleDeleteProject}

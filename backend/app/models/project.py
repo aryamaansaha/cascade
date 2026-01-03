@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, date
 from typing import TYPE_CHECKING
 from sqlmodel import SQLModel, Field, Relationship
 
@@ -15,6 +15,7 @@ class Project(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str = Field(index=True)
     description: str | None = Field(default=None)
+    deadline: date | None = Field(default=None)  # Optional project deadline
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     

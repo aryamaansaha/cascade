@@ -3,7 +3,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import type { Project, Task, Dependency } from '../../api/types';
+import type { Project, Task, Dependency, ProjectStatus } from '../../api/types';
 import { ConfirmModal } from '../ConfirmModal';
 import { getEarliestStartDate, formatDateLong } from '../../utils/scheduling';
 import './AppShell.css';
@@ -12,6 +12,7 @@ interface AppShellProps {
   // Left sidebar
   projects: Project[];
   selectedProjectId: string | null;
+  projectStatus?: ProjectStatus;
   onSelectProject: (id: string) => void;
   onCreateProject: () => void;
   onDeleteProject: (id: string) => Promise<void>;
@@ -29,6 +30,7 @@ interface AppShellProps {
 export function AppShell({
   projects,
   selectedProjectId,
+  projectStatus,
   onSelectProject,
   onCreateProject,
   onDeleteProject,
@@ -136,6 +138,12 @@ export function AppShell({
                 💡 Drag between handles to connect tasks • Click an edge + Delete to remove
               </span>
             </div>
+            
+            {/* Deadline Status Banner */}
+            {projectStatus && (
+              <DeadlineBanner status={projectStatus} />
+            )}
+            
             {children}
           </>
         ) : (
@@ -324,6 +332,59 @@ function TaskInspector({ task, tasks, dependencies, onUpdate, onDeleteRequest }:
           Delete Task
         </button>
       </div>
+    </div>
+  );
+}
+
+// =============================================================================
+// Deadline Banner Component
+// =============================================================================
+
+interface DeadlineBannerProps {
+  status: ProjectStatus;
+}
+
+function DeadlineBanner({ status }: DeadlineBannerProps) {
+  const { deadline, projected_end_date, is_over_deadline, days_over, task_count } = status;
+  
+  // Don't show if no deadline set
+  if (!deadline) {
+    return null;
+  }
+  
+  // Don't show if no tasks
+  if (task_count === 0) {
+    return null;
+  }
+  
+  const bannerClass = is_over_deadline ? 'deadline-banner over' : 'deadline-banner on-track';
+  
+  return (
+    <div className={bannerClass}>
+      {is_over_deadline ? (
+        <>
+          <span className="deadline-icon">⚠️</span>
+          <span className="deadline-text">
+            <strong>{days_over} days over deadline</strong>
+            <span className="deadline-details">
+              Projected: {formatDateLong(projected_end_date!)} • Deadline: {formatDateLong(deadline)}
+            </span>
+          </span>
+        </>
+      ) : (
+        <>
+          <span className="deadline-icon">✓</span>
+          <span className="deadline-text">
+            <strong>On track</strong>
+            <span className="deadline-details">
+              {days_over !== null && days_over < 0 
+                ? `${Math.abs(days_over)} days ahead`
+                : 'Right on deadline'
+              } • Deadline: {formatDateLong(deadline)}
+            </span>
+          </span>
+        </>
+      )}
     </div>
   );
 }

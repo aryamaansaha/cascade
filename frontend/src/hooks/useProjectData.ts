@@ -19,6 +19,7 @@ import type {
 export const queryKeys = {
   projects: ['projects'] as const,
   project: (id: string) => ['projects', id] as const,
+  projectStatus: (id: string) => ['projects', id, 'status'] as const,
   tasks: (projectId?: string) => ['tasks', { projectId }] as const,
   task: (id: string) => ['tasks', id] as const,
   dependencies: (projectId?: string) => ['dependencies', { projectId }] as const,
@@ -75,6 +76,16 @@ export function useDeleteProject() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.projects });
     },
+  });
+}
+
+export function useProjectStatus(projectId?: string) {
+  return useQuery({
+    queryKey: queryKeys.projectStatus(projectId || ''),
+    queryFn: () => projectApi.getStatus(projectId!),
+    enabled: !!projectId,
+    // Poll every 3 seconds to update as tasks change
+    refetchInterval: 3000,
   });
 }
 

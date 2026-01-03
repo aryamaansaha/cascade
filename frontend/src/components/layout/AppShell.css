@@ -357,3 +357,48 @@
   font-size: 0.875rem;
 }
 
+/* =============================================================================
+   Deadline Banner
+   ============================================================================= */
+
+.deadline-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  margin: 0 1rem 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.deadline-banner.over {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+.deadline-banner.on-track {
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #86efac;
+}
+
+.deadline-icon {
+  font-size: 1rem;
+}
+
+.deadline-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.deadline-text strong {
+  font-weight: 600;
+}
+
+.deadline-details {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
