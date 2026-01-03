@@ -27,6 +27,7 @@ import {
   useDeleteDependency,
 } from './hooks/useProjectData';
 import type { Task, TaskCreate, ProjectCreate, ApiError } from './api/types';
+import { notify } from './utils/notifications';
 
 import './index.css';
 
@@ -86,6 +87,7 @@ function CascadeApp() {
   const handleCreateProject = useCallback(async (data: ProjectCreate) => {
     const project = await createProjectMutation.mutateAsync(data);
     setSelectedProjectId(project.id);
+    notify.success(`Project "${project.name}" created`);
   }, [createProjectMutation]);
 
   const handleDeleteProject = useCallback(async (id: string) => {
@@ -96,9 +98,10 @@ function CascadeApp() {
         setSelectedProjectId(null);
         setSelectedTaskId(null);
       }
+      notify.success('Project deleted');
     } catch (error) {
       const apiError = error as ApiError;
-      console.error('Failed to delete project:', apiError.message);
+      notify.error(apiError.message || 'Failed to delete project');
       throw error; // Re-throw so the modal knows it failed
     }
   }, [deleteProjectMutation, selectedProjectId]);
@@ -110,6 +113,7 @@ function CascadeApp() {
   const handleCreateTask = useCallback(async (data: TaskCreate) => {
     const task = await createTaskMutation.mutateAsync(data);
     setSelectedTaskId(task.id);
+    notify.success(`Task "${task.title}" created`);
   }, [createTaskMutation]);
 
   const handleUpdateTask = useCallback(
@@ -118,7 +122,7 @@ function CascadeApp() {
         await updateTaskMutation.mutateAsync({ id, data: updates });
       } catch (error) {
         const apiError = error as ApiError;
-        console.error('Failed to update task:', apiError.message);
+        notify.error(apiError.message || 'Failed to update task');
       }
     },
     [updateTaskMutation]
@@ -129,9 +133,10 @@ function CascadeApp() {
       try {
         await deleteTaskMutation.mutateAsync(id);
         setSelectedTaskId(null);
+        notify.success('Task deleted');
       } catch (error) {
         const apiError = error as ApiError;
-        console.error('Failed to delete task:', apiError.message);
+        notify.error(apiError.message || 'Failed to delete task');
       }
     },
     [deleteTaskMutation]
@@ -144,10 +149,10 @@ function CascadeApp() {
           predecessor_id: predecessorId,
           successor_id: successorId,
         });
+        notify.success('Dependency created');
       } catch (error) {
         const apiError = error as ApiError;
-        // TODO: Show toast notification instead
-        console.error('Cannot create dependency:', apiError.message);
+        notify.error(apiError.message || 'Cannot create dependency', 'Dependency Error');
       }
     },
     [createDependencyMutation]
@@ -157,9 +162,10 @@ function CascadeApp() {
     async (predecessorId: string, successorId: string) => {
       try {
         await deleteDependencyMutation.mutateAsync({ predecessorId, successorId });
+        notify.success('Dependency removed');
       } catch (error) {
         const apiError = error as ApiError;
-        console.error('Failed to delete dependency:', apiError.message);
+        notify.error(apiError.message || 'Failed to delete dependency');
       }
     },
     [deleteDependencyMutation]
@@ -172,8 +178,9 @@ function CascadeApp() {
           id: taskId,
           data: { position_x: x, position_y: y },
         });
+        // No notification for position saves - too frequent
       } catch (error) {
-        console.error('Failed to save position:', error);
+        notify.error('Failed to save position');
       }
     },
     [updateTaskMutation]
