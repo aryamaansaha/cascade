@@ -9,6 +9,8 @@ on:
 jobs:
   deploy:
     runs-on: self-hosted
+    # Security: Only run on direct pushes to main, not on PRs from forks
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     
     steps:
       - name: Pull latest code
