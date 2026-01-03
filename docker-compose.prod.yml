@@ -1,0 +1,88 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: cascade_postgres_prod
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-cascade}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme_in_prod}
+      POSTGRES_DB: ${POSTGRES_DB:-cascade}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cascade}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: cascade_redis_prod
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cascade_backend_prod
+    environment:
+      # Database
+      DATABASE_URL: postgresql://${POSTGRES_USER:-cascade}:${POSTGRES_PASSWORD:-changeme_in_prod}@postgres:5432/${POSTGRES_DB:-cascade}
+      # Redis
+      REDIS_URL: redis://redis:6379/0
+      # Firebase Admin SDK
+      GOOGLE_APPLICATION_CREDENTIALS: /app/firebase-admin-sdk.json
+      # App settings
+      DEBUG: "false"
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-https://cascade-roan.vercel.app}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/cascade-6dcb0-firebase-adminsdk-fbsvc-9c1b605569.json:/app/firebase-admin-sdk.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cascade_worker_prod
+    environment:
+      # Database
+      DATABASE_URL: postgresql://${POSTGRES_USER:-cascade}:${POSTGRES_PASSWORD:-changeme_in_prod}@postgres:5432/${POSTGRES_DB:-cascade}
+      # Redis
+      REDIS_URL: redis://redis:6379/0
+      # Firebase Admin SDK
+      GOOGLE_APPLICATION_CREDENTIALS: /app/firebase-admin-sdk.json
+      # App settings
+      DEBUG: "false"
+    volumes:
+      - ./backend/cascade-6dcb0-firebase-adminsdk-fbsvc-9c1b605569.json:/app/firebase-admin-sdk.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: arq app.worker.WorkerSettings
+
+volumes:
+  postgres_data:
+  redis_data:
+
