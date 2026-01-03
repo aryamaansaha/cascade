@@ -53,6 +53,16 @@ export function AppShell({
   onDeleteTask,
   onCreateTask,
 }: AppShellProps) {
+  // Sidebar collapse state (persisted to localStorage)
+  const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState(() => {
+    const saved = localStorage.getItem('leftSidebarCollapsed');
+    return saved === 'true';
+  });
+  const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(() => {
+    const saved = localStorage.getItem('rightSidebarCollapsed');
+    return saved === 'true';
+  });
+
   // Task delete confirmation state
   const [deleteTaskConfirmOpen, setDeleteTaskConfirmOpen] = useState(false);
   const [isDeletingTask, setIsDeletingTask] = useState(false);
@@ -61,6 +71,15 @@ export function AppShell({
   const [deleteProjectConfirmOpen, setDeleteProjectConfirmOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
   const [isDeletingProject, setIsDeletingProject] = useState(false);
+
+  // Persist sidebar state to localStorage
+  useEffect(() => {
+    localStorage.setItem('leftSidebarCollapsed', String(leftSidebarCollapsed));
+  }, [leftSidebarCollapsed]);
+
+  useEffect(() => {
+    localStorage.setItem('rightSidebarCollapsed', String(rightSidebarCollapsed));
+  }, [rightSidebarCollapsed]);
 
   const handleDeleteTaskRequest = () => {
     setDeleteTaskConfirmOpen(true);
@@ -98,54 +117,65 @@ export function AppShell({
   };
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${leftSidebarCollapsed ? 'left-collapsed' : ''} ${rightSidebarCollapsed ? 'right-collapsed' : ''}`}>
       {/* Left Sidebar - Projects */}
-      <aside className="sidebar sidebar-left">
-        <div className="sidebar-header">
-          <img src="/cascade_logo.png" alt="Cascade" className="logo-icon" />
-          <h1 className="logo">Cascade</h1>
-        </div>
-        
-        {/* User info */}
-        {userEmail && (
-          <div className="user-info">
-            <span className="user-email">{userEmail}</span>
-            <button className="btn-logout" onClick={onLogout} title="Sign out">
-              Logout
-            </button>
-          </div>
-        )}
-        
-        <div className="sidebar-content">
-          <div className="section-header">
-            <span>Projects</span>
-            <button className="btn-icon" onClick={onCreateProject} title="New Project">
-              +
-            </button>
-          </div>
-          <ul className="project-list">
-            {projects.map((project) => (
-              <li
-                key={project.id}
-                className={`project-item ${selectedProjectId === project.id ? 'active' : ''}`}
-                onClick={() => onSelectProject(project.id)}
-              >
-                <span className="project-icon">📁</span>
-                <span className="project-name">{project.name}</span>
-                <button
-                  className="btn-icon project-delete"
-                  onClick={(e) => handleDeleteProjectRequest(project, e)}
-                  title="Delete Project"
-                >
-                  ×
+      <aside className={`sidebar sidebar-left ${leftSidebarCollapsed ? 'collapsed' : ''}`}>
+        {!leftSidebarCollapsed && (
+          <>
+            <div className="sidebar-header">
+              <img src="/cascade_logo.png" alt="Cascade" className="logo-icon" />
+              <h1 className="logo">Cascade</h1>
+            </div>
+            
+            {/* User info */}
+            {userEmail && (
+              <div className="user-info">
+                <span className="user-email">{userEmail}</span>
+                <button className="btn-logout" onClick={onLogout} title="Sign out">
+                  Logout
                 </button>
-              </li>
-            ))}
-            {projects.length === 0 && (
-              <li className="empty-state">No projects yet</li>
+              </div>
             )}
-          </ul>
-        </div>
+            
+            <div className="sidebar-content">
+              <div className="section-header">
+                <span>Projects</span>
+                <button className="btn-icon" onClick={onCreateProject} title="New Project">
+                  +
+                </button>
+              </div>
+              <ul className="project-list">
+                {projects.map((project) => (
+                  <li
+                    key={project.id}
+                    className={`project-item ${selectedProjectId === project.id ? 'active' : ''}`}
+                    onClick={() => onSelectProject(project.id)}
+                  >
+                    <span className="project-icon">📁</span>
+                    <span className="project-name">{project.name}</span>
+                    <button
+                      className="btn-icon project-delete"
+                      onClick={(e) => handleDeleteProjectRequest(project, e)}
+                      title="Delete Project"
+                    >
+                      ×
+                    </button>
+                  </li>
+                ))}
+                {projects.length === 0 && (
+                  <li className="empty-state">No projects yet</li>
+                )}
+              </ul>
+            </div>
+          </>
+        )}
+        <button 
+          className="sidebar-toggle sidebar-toggle-left" 
+          onClick={() => setLeftSidebarCollapsed(!leftSidebarCollapsed)}
+          title={leftSidebarCollapsed ? "Show sidebar" : "Hide sidebar"}
+        >
+          {leftSidebarCollapsed ? '›' : '‹'}
+        </button>
       </aside>
 
       {/* Center - Canvas */}
@@ -198,27 +228,38 @@ export function AppShell({
       </main>
 
       {/* Right Sidebar - Inspector */}
-      <aside className="sidebar sidebar-right">
-        <div className="sidebar-header">
-          <h2>Inspector</h2>
-        </div>
-        <div className="sidebar-content">
-          {selectedTask ? (
-            <TaskInspector
-              task={selectedTask}
-              tasks={tasks}
-              dependencies={dependencies}
-              criticalPath={criticalPath}
-              projectId={selectedProjectId!}
-              onUpdate={onUpdateTask}
-              onDeleteRequest={handleDeleteTaskRequest}
-            />
-          ) : (
-            <div className="empty-state">
-              <p>Select a task to edit</p>
+      <aside className={`sidebar sidebar-right ${rightSidebarCollapsed ? 'collapsed' : ''}`}>
+        <button 
+          className="sidebar-toggle sidebar-toggle-right" 
+          onClick={() => setRightSidebarCollapsed(!rightSidebarCollapsed)}
+          title={rightSidebarCollapsed ? "Show inspector" : "Hide inspector"}
+        >
+          {rightSidebarCollapsed ? '‹' : '›'}
+        </button>
+        {!rightSidebarCollapsed && (
+          <>
+            <div className="sidebar-header">
+              <h2>Inspector</h2>
             </div>
-          )}
-        </div>
+            <div className="sidebar-content">
+              {selectedTask ? (
+                <TaskInspector
+                  task={selectedTask}
+                  tasks={tasks}
+                  dependencies={dependencies}
+                  criticalPath={criticalPath}
+                  projectId={selectedProjectId!}
+                  onUpdate={onUpdateTask}
+                  onDeleteRequest={handleDeleteTaskRequest}
+                />
+              ) : (
+                <div className="empty-state">
+                  <p>Select a task to edit</p>
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </aside>
 
       {/* Delete Task Confirmation Modal */}
