@@ -244,6 +244,15 @@
   gap: 0.75rem;
 }
 
+/* Date constraint hint */
+.date-constraint-hint {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--accent-primary);
+  font-style: italic;
+}
+
 /* Info Section */
 .info-section {
   padding: 0.75rem;

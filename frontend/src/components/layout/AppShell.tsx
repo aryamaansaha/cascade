@@ -3,8 +3,9 @@
  */
 
 import { useState, useEffect } from 'react';
-import type { Project, Task } from '../../api/types';
+import type { Project, Task, Dependency } from '../../api/types';
 import { ConfirmModal } from '../ConfirmModal';
+import { getEarliestStartDate, formatDateLong } from '../../utils/scheduling';
 import './AppShell.css';
 
 interface AppShellProps {
@@ -18,6 +19,8 @@ interface AppShellProps {
   children: React.ReactNode;
   // Right inspector
   selectedTask: Task | null;
+  tasks: Task[];
+  dependencies: Dependency[];
   onUpdateTask: (id: string, updates: Partial<Task>) => void;
   onDeleteTask: (id: string) => Promise<void>;
   onCreateTask: () => void;
@@ -31,6 +34,8 @@ export function AppShell({
   onDeleteProject,
   children,
   selectedTask,
+  tasks,
+  dependencies,
   onUpdateTask,
   onDeleteTask,
   onCreateTask,
@@ -153,6 +158,8 @@ export function AppShell({
           {selectedTask ? (
             <TaskInspector
               task={selectedTask}
+              tasks={tasks}
+              dependencies={dependencies}
               onUpdate={onUpdateTask}
               onDeleteRequest={handleDeleteTaskRequest}
             />
@@ -200,15 +207,21 @@ export function AppShell({
 
 interface TaskInspectorProps {
   task: Task;
+  tasks: Task[];
+  dependencies: Dependency[];
   onUpdate: (id: string, updates: Partial<Task>) => void;
   onDeleteRequest: () => void;
 }
 
-function TaskInspector({ task, onUpdate, onDeleteRequest }: TaskInspectorProps) {
+function TaskInspector({ task, tasks, dependencies, onUpdate, onDeleteRequest }: TaskInspectorProps) {
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || '');
   const [duration, setDuration] = useState(task.duration_days);
   const [startDate, setStartDate] = useState(task.start_date);
+
+  // Calculate earliest valid start date (if task has predecessors)
+  const earliestStart = getEarliestStartDate(task.id, tasks, dependencies);
+  const hasPredecessors = earliestStart !== null;
 
   // Update local state when task changes
   useEffect(() => {
@@ -287,6 +300,11 @@ function TaskInspector({ task, onUpdate, onDeleteRequest }: TaskInspectorProps) 
             onChange={(e) => setStartDate(e.target.value)}
             onBlur={() => handleBlur('start_date', startDate)}
           />
+          {hasPredecessors && earliestStart && (
+            <span className="date-constraint-hint">
+              Earliest: {formatDateLong(earliestStart)}
+            </span>
+          )}
         </div>
       </div>
 

@@ -204,6 +204,8 @@ function CascadeApp() {
         onCreateProject={() => setIsProjectModalOpen(true)}
         onDeleteProject={handleDeleteProject}
         selectedTask={selectedTask}
+        tasks={tasks}
+        dependencies={dependencies}
         onUpdateTask={handleUpdateTask}
         onDeleteTask={handleDeleteTask}
         onCreateTask={() => setIsTaskModalOpen(true)}

@@ -211,14 +211,14 @@ def calculate_dates(
     """
     Calculate new start dates using Critical Path Method (forward pass).
     
-    Formula: Successor.Start = Max(Predecessor.End) + 1
+    Formula: Successor.Start >= Max(Predecessor.End) + 1
     Where: Predecessor.End = Predecessor.Start + Predecessor.Duration - 1
     
     Key logic:
     - Tasks with NO predecessors are "anchors" - their dates are user-controlled
-    - Tasks WITH predecessors have their dates calculated from predecessor end dates
-    - The root_task_id helps us trace what triggered the recalc, but doesn't
-      exempt a task from recalculation if it has predecessors
+    - Tasks WITH predecessors must start AFTER their predecessors end
+    - BUT if user has set a later date (slack time), we respect it
+    - Only push dates forward if they violate the constraint
     
     Args:
         graph: NetworkX DiGraph with task data on nodes
@@ -245,15 +245,23 @@ def calculate_dates(
                 node_data["end_date"] = start + timedelta(days=duration - 1)
             continue
         
-        # Task has predecessors - calculate its start date from them
-        # Start = Max(Predecessor.End) + 1 day
+        # Task has predecessors - calculate earliest valid start
+        # Earliest = Max(Predecessor.End) + 1 day
         max_predecessor_end = max(
             graph.nodes[pred_id]["end_date"]
             for pred_id in predecessors
         )
+        earliest_valid_start = max_predecessor_end + timedelta(days=1)
         
-        # New start is the day after the latest predecessor ends
-        new_start = max_predecessor_end + timedelta(days=1)
+        # Get current user-set date
+        current_start = node_data["start_date"]
+        
+        # Only push if current date violates the constraint
+        # Otherwise, respect user's slack time
+        if current_start < earliest_valid_start:
+            new_start = earliest_valid_start  # Push forward (constraint violated)
+        else:
+            new_start = current_start  # Keep user's date (valid slack)
         
         # Calculate this task's end date
         duration = node_data["duration_days"]
