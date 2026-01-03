@@ -189,7 +189,8 @@ export function AppShell({
           ×
         </button>
         
-        {!leftSidebarCollapsed && (
+        {/* Show content if: not collapsed OR mobile menu is open */}
+        {(!leftSidebarCollapsed || mobileMenuOpen) && (
           <>
             <div className="sidebar-header">
               <img src="/cascade_logo.png" alt="Cascade" className="logo-icon" />
@@ -335,7 +336,8 @@ export function AppShell({
           <div className="mobile-sheet-handle-bar" />
         </div>
         
-        {!rightSidebarCollapsed && (
+        {/* Show content if: not collapsed OR mobile inspector is open */}
+        {(!rightSidebarCollapsed || mobileInspectorOpen) && (
           <>
             <div className="sidebar-header">
               <h2>Inspector</h2>
