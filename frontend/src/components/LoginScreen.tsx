@@ -60,17 +60,17 @@ export function LoginScreen() {
           <div className="feature">
             <span className="feature-icon">📊</span>
             <h3>Critical Path Analysis</h3>
-            <p>Automatically identify bottlenecks and dependencies</p>
+            <p>Identify which tasks will delay your project</p>
           </div>
           <div className="feature">
-            <span className="feature-icon">⚡</span>
-            <h3>Real-time Updates</h3>
-            <p>Changes propagate instantly across the graph</p>
+            <span className="feature-icon">🔗</span>
+            <h3>Smart Dependencies</h3>
+            <p>Dates automatically adjust when blockers shift</p>
           </div>
           <div className="feature">
-            <span className="feature-icon">↩️</span>
-            <h3>Undo/Redo</h3>
-            <p>Never lose your work with full history</p>
+            <span className="feature-icon">🔮</span>
+            <h3>What-If Planning</h3>
+            <p>Simulate changes without breaking your schedule</p>
           </div>
         </div>
       </div>
