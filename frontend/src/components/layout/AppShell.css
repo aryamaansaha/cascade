@@ -76,19 +76,22 @@
 }
 
 .btn-logout {
-  background: none;
-  border: none;
-  color: var(--text-tertiary);
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
   cursor: pointer;
-  padding: 0.25rem 0.5rem;
-  font-size: 1.125rem;
-  line-height: 1;
-  transition: color 0.15s ease;
+  transition: all 0.15s ease;
   flex-shrink: 0;
 }
 
 .btn-logout:hover {
   color: var(--text-primary);
+  background-color: var(--bg-secondary);
+  border-color: var(--text-tertiary);
 }
 
 .sidebar-content {

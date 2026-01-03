@@ -111,7 +111,7 @@ export function AppShell({
           <div className="user-info">
             <span className="user-email">{userEmail}</span>
             <button className="btn-logout" onClick={onLogout} title="Sign out">
-              ↗
+              Logout
             </button>
           </div>
         )}
