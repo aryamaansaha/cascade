@@ -263,7 +263,7 @@ function FlowCanvasInner({
         onCancelLinkMode();
       } else {
         // Normal mode - just select
-        onSelectTask(node.id);
+      onSelectTask(node.id);
       }
     },
     [onSelectTask, linkModeSourceId, onCreateDependency, onCancelLinkMode]

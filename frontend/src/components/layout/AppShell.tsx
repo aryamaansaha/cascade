@@ -237,6 +237,24 @@ export function AppShell({
                 )}
               </ul>
             </div>
+            
+            {/* Sidebar Footer - Feedback & Credit */}
+            <div className="sidebar-footer">
+              <a 
+                href="https://github.com/aryamaansaha/cascade/issues" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="feedback-link"
+              >
+                🐛 Report a Bug
+              </a>
+              <div className="sidebar-credit">
+                Built by{' '}
+                <a href="https://aryamaan.dev" target="_blank" rel="noopener noreferrer">
+                  Aryamaan Saha
+                </a>
+              </div>
+            </div>
           </>
         )}
         <button 

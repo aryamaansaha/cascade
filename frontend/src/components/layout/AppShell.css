@@ -166,6 +166,53 @@
   padding: 0.75rem;
 }
 
+/* Sidebar Footer - Feedback & Credit */
+.sidebar-footer {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.feedback-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 0.813rem;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.feedback-link:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+}
+
+.sidebar-credit {
+  text-align: center;
+  font-size: 0.688rem;
+  color: var(--text-tertiary);
+}
+
+.sidebar-credit a {
+  color: var(--accent-primary);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.sidebar-credit a:hover {
+  color: var(--accent-secondary);
+  text-decoration: underline;
+}
+
 /* Section Header */
 .section-header {
   display: flex;
