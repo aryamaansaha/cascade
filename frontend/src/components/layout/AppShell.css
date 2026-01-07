@@ -35,8 +35,8 @@
   border-right: 1px solid var(--border-color);
   position: relative;
   transition: all 0.3s ease;
-  overflow: hidden;
   min-height: 0; /* Allow flex children to shrink */
+  /* Note: Don't use overflow:hidden here - it clips the toggle buttons */
 }
 
 .sidebar.collapsed {
