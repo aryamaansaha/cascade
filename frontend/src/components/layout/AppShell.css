@@ -6,6 +6,8 @@
   display: grid;
   grid-template-columns: 240px 1fr 380px;
   height: 100vh;
+  width: 100vw;
+  overflow: hidden;
   background: var(--bg-primary);
   transition: grid-template-columns 0.3s ease;
 }
@@ -33,6 +35,8 @@
   border-right: 1px solid var(--border-color);
   position: relative;
   transition: all 0.3s ease;
+  overflow: hidden;
+  min-height: 0; /* Allow flex children to shrink */
 }
 
 .sidebar.collapsed {
@@ -163,7 +167,9 @@
 .sidebar-content {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 0.75rem;
+  min-height: 0; /* Allow content to shrink and scroll */
 }
 
 /* Sidebar Footer - Feedback & Credit */
@@ -173,6 +179,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  flex-shrink: 0; /* Never shrink the footer */
 }
 
 .feedback-link {
@@ -298,6 +305,9 @@
   flex-direction: column;
   position: relative;
   background: var(--bg-canvas);
+  min-width: 0; /* Prevent canvas from expanding beyond grid bounds */
+  min-height: 0;
+  overflow: hidden;
 }
 
 .canvas-toolbar {
@@ -528,6 +538,7 @@
   margin-top: 1rem;
   padding-top: 1rem;
   border-top: 1px solid var(--border-color);
+  flex-shrink: 0; /* Keep delete button visible */
 }
 
 /* =============================================================================

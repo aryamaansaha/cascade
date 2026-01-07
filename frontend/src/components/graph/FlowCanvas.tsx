@@ -347,6 +347,16 @@ function FlowCanvasInner({
     onSelectTask(null);
   }, [setEdges, onSelectTask, linkModeSourceId, onCancelLinkMode]);
 
+  // Fit view on initial mount only
+  const hasInitialFit = useRef(false);
+  useEffect(() => {
+    if (!hasInitialFit.current && tasks.length > 0) {
+      hasInitialFit.current = true;
+      // Small delay to ensure nodes are rendered
+      setTimeout(() => fitView({ padding: 0.2 }), 100);
+    }
+  }, [tasks.length, fitView]);
+
   return (
       <ReactFlow
         nodes={nodes}
@@ -361,7 +371,6 @@ function FlowCanvasInner({
         nodeTypes={nodeTypes}
         connectionMode={ConnectionMode.Loose}
         connectionRadius={40}
-        fitView
         fitViewOptions={{ padding: 0.2 }}
         defaultEdgeOptions={{
           type: 'smoothstep',
